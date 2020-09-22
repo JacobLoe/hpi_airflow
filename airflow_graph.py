@@ -15,81 +15,133 @@ from airflow.models import Variable
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': days_ago(2),
+    'start_date': days_ago(1),
     'retries': 3,
     'retry_delay': timedelta(hours=1),
+    'provide_context': True,    # is needed for tasks to communicate via xcom
 }
 
+with DAG('hpi_extraction', default_args=default_args,
+         schedule_interval=timedelta(seconds=10),
+         max_active_runs=1,
+         concurrency=1,) as dag:
 
-with DAG('hpi_extraction', default_args=default_args, schedule_interval=timedelta(seconds=5),) as dag:
+    videoids = Variable.get('videoids')
 
-    # the volumes mounted to the image need to be given as absolute paths
-    volumes_video_path = Variable.get('volumes_video_path')     # '/home/jacob/Downloads/hpi/videos:/video:ro'
-    volumes_features_path = Variable.get('volumes_features_path')       # '/home/jacob/Downloads/hpi_airflow/static/features_videos:/data'
-    volumes_file_mappings_path = Variable.get('volumes_file_mappings_path')     # '/home/jacob/Downloads/hpi/videos/file_mappings.tsv:/file_mappings.tsv:ro'
+    def push_initial_videoids(**kwargs):
+        # gets ids from airflow variable and and push them to xcom
+        # this function is only called once
+        kwargs['ti'].xcom_push(key='videoids', value=videoids)
 
-    video_ids = '0 1 2'
+    def process_videoids(**kwargs):
+        # gets ids from another task
+        ti = kwargs['ti']
+        ids = ti.xcom_pull(key='videoids')
 
-    t1 = BashOperator(
-        task_id='t1',
-        bash_command='echo {{var.value.volumes_video_path}}',
+        # run docker images with pulled ids
+        # instead for testing assume one video was not processed correctly and push the other ids
+        new_ids = ids[:-2]
+        kwargs['ti'].xcom_push(key='videoids', value=new_ids)
+
+
+    def check_extractor_progress(**kwargs):
+        # check folders for done_files
+        # for testing pull ids from xcom and push them unchanged
+        ti = kwargs['ti']
+        ids = ti.xcom_pull(key='videoids')
+        # push ids of movies with the files
+        kwargs['ti'].xcom_push(key='videoids', value=ids)
+
+    t1 = PythonOperator(
+        task_id='push_initial_video_ids',
+        python_callable=push_initial_videoids,
     )
 
-    task_shot_detection = DockerOperator(
-        task_id='shotdetection',
-        image='jacobloe/shot_detection:0.1',
-        command='/video /data/ /file_mappings.tsv {videoids}'.format(videoids=video_ids),
-        volumes=[volumes_video_path, volumes_features_path, volumes_file_mappings_path],
+    t2 = PythonOperator(
+        task_id='process_videoids',
+        python_callable=process_videoids,
     )
+
+    t3 = PythonOperator(
+        task_id='check_extractor_progress',
+        python_callable=check_extractor_progress,
+    )
+
+    t4 = PythonOperator(
+        task_id='t4',
+        python_callable=process_videoids,
+    )
+
+    t5 = PythonOperator(
+        task_id='t5',
+        python_callable=check_extractor_progress,
+    )
+
+    t1 >> t2 >> t3 >> t4 >> t5
+    # # the volumes mounted to the image need to be given as absolute paths
+    # volumes_video_path = Variable.get('volumes_video_path')
+    # # volumes_features_path = Variable.get('volumes_features_path')
+    # # volumes_file_mappings_path = Variable.get('volumes_file_mappings_path')
+    # #
+    # # # docker parameters
+    # # shotdetection_sensitivity = Variable.get('shotdetection_sensitivity')
+    # #
+    # # image_extraction_trim_frames = Variable.get('image_extraction_trim_frames')
+    # # image_extraction_frame_width = Variable.get('image_extraction_frame_width')
+    # # # FIXME maybe use the same file_extension variable for all extractors to prevent errors
+    # # image_extraction_file_extension = Variable.get('image_extraction_file_extension')
+    # #
+    # # feature_extraction_file_extension = Variable.get('feature_extraction_file_extension')
+    # #
+    # # aspect_ratio_extraction_file_extension = Variable.get('aspect_ratio_extraction_file_extension')
+    # #
+    # # optical_flow_frame_width = Variable.get('optical_flow_frame_width')
+    # # optical_flow_step_size = Variable.get('optical_flow_step_size')
+    # # optical_flow_window_size = Variable.get('optical_flow_window_size')
+    # # optical_flow_top_percentile = Variable.get('optical_flow_top_percentile')
     #
-    # trim_frames = '--trim_frames yes'
-    # frame_width = '--frame_width 400'
-    #
+
+    # task_shotdetection = DockerOperator(
+    #     task_id='shotdetection',
+    #     image='jacobloe/shot_detection:0.1',
+    #     command='/video /data/ /file_mappings.tsv {videoids} --sensitivity {sensitivity}'.format(
+    #         videoids=videoids, sensitivity=shotdetection_sensitivity),
+    #     volumes=[volumes_video_path, volumes_features_path, volumes_file_mappings_path],
+    # )
+
     # task_extract_images = DockerOperator(
     #     task_id='image_extraction',
     #     image='jacobloe/extract_images:0.1',
-    #     command='/video/ /data/ /file_mappings.tsv {a} {b}'.format(a=trim_frames, b=frame_width),
+    #     command='/video/ /data/ /file_mappings.tsv {videoids} --trim_frames {trim_frames} --frame_width {frame_width} --file_extension {file_extension}'.format(
+    #         videoids=videoids, trim_frames=image_extraction_trim_frames, frame_width=image_extraction_frame_width, file_extension=image_extraction_file_extension),
     #     volumes=[volumes_video_path, volumes_features_path, volumes_file_mappings_path],
     # )
     #
     # task_extract_features = DockerOperator(
     #     task_id='feature_extraction',
     #     image='jacobloe/extract_features:0.1',
-    #     command='/data/ /file_mappings.tsv',
+    #     command='/data/ /file_mappings.tsv {videoids} --file_extension {file_extension}'.format(
+    #         videoids=videoids, file_extension=feature_extraction_file_extension),
     #     volumes=[volumes_video_path, volumes_features_path, volumes_file_mappings_path, '/home/.keras/:/root/.keras'],
     # )
     #
     # task_extract_aspect_ratio = DockerOperator(
     #     task_id='aspect_ratio_extraction',
     #     image='jacobloe/extract_aspect_ratio:0.1',
-    #     command='/data/ /file_mappings.tsv',
+    #     command='/data/ /file_mappings.tsv {videoids} --file_extension {file_extension}'.format(
+    #         videoids=videoids, file_extension=aspect_ratio_extraction_file_extension),
     #     volumes=[volumes_video_path, volumes_features_path, volumes_file_mappings_path],
     # )
     #
     # task_extract_optical_flow = DockerOperator(
     #     task_id='extract_optical_flow',
     #     image='jacobloe/optical_flow:0.1',
-    #     command='/video/ /data /file_mappings.tsv',
+    #     command='/video/ /data /file_mappings.tsv {videoids} --frame_width {frame_width} --step_size {step_size} --window_size {window_size} --top_percentile {top_percentile}'.format(
+    #         videoids=videoids, step_size=optical_flow_step_size, window_size=optical_flow_window_size, frame_width=optical_flow_frame_width, top_percentile=optical_flow_top_percentile),
     #     volumes=[volumes_video_path, volumes_features_path, volumes_file_mappings_path],
     # )
     #
-
-    # templated_command = """
-    # {% for i in range(5) %}
-    #     echo "{{ ds }}"
-    #     echo "{{ macros.ds_add(ds, 7)}}"
-    #     echo "{{ params.my_param }}"
-    # {% endfor %}
-    # """
-    #
-    # t3 = BashOperator(
-    #     task_id='t3',
-    #     depends_on_past=False,
-    #     bash_command=templated_command,
-    #     params={'my_param': 'Parameter I passed in'},
-    #     xcom_push=True
-    # )
-    # # tasks will be executed from left to right, tasks will only run if the preceding task was executed successfully
-    # # tasks no explicitly mentioned are executed independently of other task and run in order of their appearance in the code
-    # task_shot_detection >> task_extract_images
+    # # # tasks will be executed from left to right, tasks will only run if the preceding task was executed successfully
+    # # # tasks no explicitly mentioned are executed independently of other task and run in order of their appearance in the code
+    # task_shotdetection >> task_extract_images
     # task_extract_images >> [task_extract_features, task_extract_aspect_ratio]

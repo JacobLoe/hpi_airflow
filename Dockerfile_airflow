@@ -5,6 +5,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN pip3 install --trusted-host pypi.python.org apache-airflow==1.10.12 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-1.10.12/constraints-3.8.txt"
 
 COPY airflow_graph.py /root/dags/
+Vole
 
 WORKDIR /root
 
