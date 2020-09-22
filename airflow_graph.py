@@ -37,10 +37,11 @@ with DAG('hpi_extraction', default_args=default_args,
         # gets ids from another task
         ti = kwargs['ti']
         ids = ti.xcom_pull(key='videoids')
-
+        print('ids: ', ids)
         # run docker images with pulled ids
         # instead for testing assume one video was not processed correctly and push the other ids
         new_ids = ids[:-2]
+        print('new_ids: ', new_ids)
         kwargs['ti'].xcom_push(key='videoids', value=new_ids)
 
 
@@ -49,6 +50,7 @@ with DAG('hpi_extraction', default_args=default_args,
         # for testing pull ids from xcom and push them unchanged
         ti = kwargs['ti']
         ids = ti.xcom_pull(key='videoids')
+        print('ids: ', ids)
         # push ids of movies with the files
         kwargs['ti'].xcom_push(key='videoids', value=ids)
 
