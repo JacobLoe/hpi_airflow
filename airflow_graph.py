@@ -5,7 +5,8 @@ import glob
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.docker_operator import DockerOperator
+# from airflow.operators.docker_operator import DockerOperator
+from docker_operator import DockerOperator
 from airflow.utils.dates import days_ago
 from airflow.contrib.sensors.file_sensor import FileSensor
 from airflow.models import Variable
@@ -55,55 +56,52 @@ with DAG('hpi_extraction', default_args=default_args,
         kwargs['ti'].xcom_push(key='optical_flow_window_size', value=optical_flow_window_size)
         kwargs['ti'].xcom_push(key='optical_flow_top_percentile', value=optical_flow_top_percentile)
 
-    def process_videoids(**kwargs):
-        # gets ids from another task
-        ti = kwargs['ti']
-        ids = ti.xcom_pull(key='videoids')
-        print('ids: ', ids)
-        # run docker images with pulled ids
-        #
-        # instead for testing assume one video was not processed correctly and push the other ids
-        new_ids = ids[:-2]
-        print('new_ids: ', new_ids)
-        kwargs['ti'].xcom_push(key='videoids', value=new_ids)
 
-
-    def check_extractor_progress(**kwargs):
-        # check folders for done_files
-        # volumes_features_path = kwargs['ti'].xcom_pull(key='volumes_features_path')
-        # last_extractor = kwargs['ti'].xcom_pull(key='last_extractor')   # get the name of the last run extractor to search for
-        # features_path = os.path.join(os.path.split(volumes_features_path),**,last_extractor)
-        # pp = glob.glob(features_path)
-        # ids = ' '
-        # for p in pp:
-        #     if os.isfile(os.path.join(p, ./done)):
-        #          id = os.path.split(os.path.split(p)[0])[1]
-        #           ids.join(id)
-        # for testing pull ids from xcom and push them unchanged
-        ti = kwargs['ti']
-        ids = ti.xcom_pull(key='videoids')
-        print('ids: ', ids)
-        # push ids of movies with the files
-        kwargs['ti'].xcom_push(key='videoids', value=ids)
-
-    t1 = BashOperator(
-        task_id='t1',
-        bash_command='sleep 30'
+    # def process_videoids(**kwargs):
+    #     # gets ids from another task
+    #     ti = kwargs['ti']
+    #     ids = ti.xcom_pull(key='videoids')
+    #     print('ids: ', ids)
+    #     # run docker images with pulled ids
+    #     #
+    #     # instead for testing assume one video was not processed correctly and push the other ids
+    #     new_ids = ids[:-2]
+    #     print('new_ids: ', new_ids)
+    #     kwargs['ti'].xcom_push(key='videoids', value=new_ids)
+    #
+    #
+    # def check_extractor_progress(**kwargs):
+    #     # check folders for done_files
+    #     # volumes_features_path = kwargs['ti'].xcom_pull(key='volumes_features_path')
+    #     # last_extractor = kwargs['ti'].xcom_pull(key='last_extractor')   # get the name of the last run extractor to search for
+    #     # features_path = os.path.join(os.path.split(volumes_features_path),**,last_extractor)
+    #     # pp = glob.glob(features_path)
+    #     # ids = ' '
+    #     # for p in pp:
+    #     #     if os.isfile(os.path.join(p, ./done)):
+    #     #          id = os.path.split(os.path.split(p)[0])[1]
+    #     #           ids.join(id)
+    #     # for testing pull ids from xcom and push them unchanged
+    #     ti = kwargs['ti']
+    #     ids = ti.xcom_pull(key='videoids')
+    #     print('ids: ', ids)
+    #     # push ids of movies with the files
+    #     kwargs['ti'].xcom_push(key='videoids', value=ids)
+    #
+    get_parameters = PythonOperator(
+        task_id='get_parameters',
+        python_callable=push_initial_parameters,
+    )
+    #
+    task_shotdetection = DockerOperator(
+        task_id='shotdetection',
+        image='jacobloe/shot_detection:0.1',
+        command='/video /data/ /file_mappings.tsv {{ti.xcom_pull(key="videoids")}} --sensitivity {{ti.xcom_pull(key="shotdetection_sensitivity")}}',
+        volumes=['{{ti.xcom_pull(key="volumes_video_path")}}', '{{ti.xcom_pull(key="volumes_features_path")}}', '{{ti.xcom_pull(key="volumes_file_mappings_path")}}'],
+        xcom_all=True,
     )
 
-    t2 = BashOperator(
-        task_id='t2',
-        bash_command='sleep 30'
-    )
-    t1 >> t2
-
-    # task_shotdetection = DockerOperator(
-    #     task_id='shotdetection',
-    #     image='jacobloe/shot_detection:0.1',
-    #     command='/video /data/ /file_mappings.tsv {videoids} --sensitivity {sensitivity}'.format(
-    #         videoids=videoids, sensitivity=shotdetection_sensitivity),
-    #     volumes=[volumes_video_path, volumes_features_path, volumes_file_mappings_path],
-    # )
+    get_parameters >> task_shotdetection
 
     # task_extract_images = DockerOperator(
     #     task_id='image_extraction',
