@@ -68,26 +68,24 @@ with DAG('hpi_extraction', default_args=default_args,
     #     new_ids = ids[:-2]
     #     print('new_ids: ', new_ids)
     #     kwargs['ti'].xcom_push(key='videoids', value=new_ids)
-    #
-    #
-    # def check_extractor_progress(**kwargs):
-    #     # check folders for done_files
-    #     # volumes_features_path = kwargs['ti'].xcom_pull(key='volumes_features_path')
-    #     # last_extractor = kwargs['ti'].xcom_pull(key='last_extractor')   # get the name of the last run extractor to search for
-    #     # features_path = os.path.join(os.path.split(volumes_features_path),**,last_extractor)
-    #     # pp = glob.glob(features_path)
-    #     # ids = ' '
-    #     # for p in pp:
-    #     #     if os.isfile(os.path.join(p, ./done)):
-    #     #          id = os.path.split(os.path.split(p)[0])[1]
-    #     #           ids.join(id)
-    #     # for testing pull ids from xcom and push them unchanged
-    #     ti = kwargs['ti']
-    #     ids = ti.xcom_pull(key='videoids')
-    #     print('ids: ', ids)
-    #     # push ids of movies with the files
-    #     kwargs['ti'].xcom_push(key='videoids', value=ids)
-    #
+
+
+    def check_extractor_progress(**kwargs):
+        # check folders for done_files
+        volumes_features_path = kwargs['ti'].xcom_pull(key='volumes_features_path')
+        # last_extractor = kwargs['ti'].xcom_pull(key='last_extractor')   # get the name of the last run extractor to search for
+        last_extractor = 'shotdetection'    # last_extractor should be dynamic
+        features_path = os.path.join(os.path.split(volumes_features_path)[0][:-1], '**', last_extractor)
+        all_features = glob.glob(features_path, recursive=True)
+        ids = []
+        for f in all_features:
+            if os.path.isfile(os.path.join(f, '.done')):
+                ids.append(os.path.split(os.path.split(f)[0])[1])
+
+        videoids = ' '.join([i for i in ids])
+        # push ids of movies with the files
+        kwargs['ti'].xcom_push(key='videoids', value=videoids)
+
     get_parameters = PythonOperator(
         task_id='get_parameters',
         python_callable=push_initial_parameters,
@@ -101,41 +99,9 @@ with DAG('hpi_extraction', default_args=default_args,
         xcom_all=True,
     )
 
-    get_parameters >> task_shotdetection
+    check_shotdetection = PythonOperator(
+        task_id='check_shotdetection',
+        python_callable=check_extractor_progress,
+    )
 
-    # task_extract_images = DockerOperator(
-    #     task_id='image_extraction',
-    #     image='jacobloe/extract_images:0.1',
-    #     command='/video/ /data/ /file_mappings.tsv {videoids} --trim_frames {trim_frames} --frame_width {frame_width} --file_extension {file_extension}'.format(
-    #         videoids=videoids, trim_frames=image_extraction_trim_frames, frame_width=image_extraction_frame_width, file_extension=image_extraction_file_extension),
-    #     volumes=[volumes_video_path, volumes_features_path, volumes_file_mappings_path],
-    # )
-    #
-    # task_extract_features = DockerOperator(
-    #     task_id='feature_extraction',
-    #     image='jacobloe/extract_features:0.1',
-    #     command='/data/ /file_mappings.tsv {videoids} --file_extension {file_extension}'.format(
-    #         videoids=videoids, file_extension=feature_extraction_file_extension),
-    #     volumes=[volumes_video_path, volumes_features_path, volumes_file_mappings_path, '/home/.keras/:/root/.keras'],
-    # )
-    #
-    # task_extract_aspect_ratio = DockerOperator(
-    #     task_id='aspect_ratio_extraction',
-    #     image='jacobloe/extract_aspect_ratio:0.1',
-    #     command='/data/ /file_mappings.tsv {videoids} --file_extension {file_extension}'.format(
-    #         videoids=videoids, file_extension=aspect_ratio_extraction_file_extension),
-    #     volumes=[volumes_video_path, volumes_features_path, volumes_file_mappings_path],
-    # )
-    #
-    # task_extract_optical_flow = DockerOperator(
-    #     task_id='extract_optical_flow',
-    #     image='jacobloe/optical_flow:0.1',
-    #     command='/video/ /data /file_mappings.tsv {videoids} --frame_width {frame_width} --step_size {step_size} --window_size {window_size} --top_percentile {top_percentile}'.format(
-    #         videoids=videoids, step_size=optical_flow_step_size, window_size=optical_flow_window_size, frame_width=optical_flow_frame_width, top_percentile=optical_flow_top_percentile),
-    #     volumes=[volumes_video_path, volumes_features_path, volumes_file_mappings_path],
-    # )
-    #
-    # # # tasks will be executed from left to right, tasks will only run if the preceding task was executed successfully
-    # # # tasks no explicitly mentioned are executed independently of other task and run in order of their appearance in the code
-    # task_shotdetection >> task_extract_images
-    # task_extract_images >> [task_extract_features, task_extract_aspect_ratio]
+    get_parameters >> task_shotdetection >> check_shotdetection
