@@ -125,6 +125,7 @@ class DockerOperator(BaseOperator):
         This needs to be set see logs of the Docker container.
     :type tty: bool
     """
+    # by adding "volumes" to the template_fiekds xcom-values can be pulled in the "volumes" argument of the DockerOperator
     template_fields = ('command', 'environment', 'container_name', 'volumes')
     template_ext = ('.sh', '.bash',)
 

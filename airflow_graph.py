@@ -22,12 +22,12 @@ default_args = {
 }
 
 with DAG('hpi_extraction', default_args=default_args,
-         schedule_interval=timedelta(seconds=10),
+         schedule_interval=None,#timedelta(seconds=10),
          max_active_runs=1,     # prevents more than one graph from running at a time
         ) as dag:
 
     def push_initial_parameters(**kwargs):
-        # gets all extractor parameters from airflow variables and and push them to xcom
+        # gets all extractor parameters from airflow variables and and pushes them to xcom
         # this function should only be called once
 
         videoids = Variable.get('videoids')
@@ -57,40 +57,36 @@ with DAG('hpi_extraction', default_args=default_args,
         kwargs['ti'].xcom_push(key='optical_flow_top_percentile', value=optical_flow_top_percentile)
 
 
-    # def process_videoids(**kwargs):
-    #     # gets ids from another task
-    #     ti = kwargs['ti']
-    #     ids = ti.xcom_pull(key='videoids')
-    #     print('ids: ', ids)
-    #     # run docker images with pulled ids
-    #     #
-    #     # instead for testing assume one video was not processed correctly and push the other ids
-    #     new_ids = ids[:-2]
-    #     print('new_ids: ', new_ids)
-    #     kwargs['ti'].xcom_push(key='videoids', value=new_ids)
-
-
     def check_extractor_progress(**kwargs):
+        # checks the feature folders for .done-files of the preceding extractor
+        # and returns the ids of the videos that have run successfully
+
         # check folders for done_files
         volumes_features_path = kwargs['ti'].xcom_pull(key='volumes_features_path')
+
+        # last_extractor should be dynamic instead of hardcoded
         # last_extractor = kwargs['ti'].xcom_pull(key='last_extractor')   # get the name of the last run extractor to search for
-        last_extractor = 'shotdetection'    # last_extractor should be dynamic
+        last_extractor = 'shotdetection'
+
+        # search for all the extractor folders in the features path
         features_path = os.path.join(os.path.split(volumes_features_path)[0][:-1], '**', last_extractor)
         all_features = glob.glob(features_path, recursive=True)
+
+        # get the ids of the videos with .done-files
         ids = []
         for f in all_features:
             if os.path.isfile(os.path.join(f, '.done')):
                 ids.append(os.path.split(os.path.split(f)[0])[1])
-
         videoids = ' '.join([i for i in ids])
-        # push ids of movies with the files
+
+        # push ids of videos to xcom
         kwargs['ti'].xcom_push(key='videoids', value=videoids)
 
     get_parameters = PythonOperator(
         task_id='get_parameters',
         python_callable=push_initial_parameters,
     )
-    #
+
     task_shotdetection = DockerOperator(
         task_id='shotdetection',
         image='jacobloe/shot_detection:0.1',
@@ -104,4 +100,9 @@ with DAG('hpi_extraction', default_args=default_args,
         python_callable=check_extractor_progress,
     )
 
-    get_parameters >> task_shotdetection >> check_shotdetection
+    t2 = BashOperator(
+        task_id='t2',
+        bash_command='sleep 40'
+    )
+
+    get_parameters >> task_shotdetection >> t2 >> check_shotdetection
