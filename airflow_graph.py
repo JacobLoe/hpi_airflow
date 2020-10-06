@@ -16,21 +16,19 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': days_ago(1),
-    'retries': 3,
-    'retry_delay': timedelta(hours=1),
     'provide_context': True,    # is needed for tasks to communicate via xcom
 }
 
 with DAG('hpi_extraction', default_args=default_args,
-         schedule_interval=None,#timedelta(seconds=10),
+         schedule_interval=None,
          max_active_runs=1,     # prevents more than one graph from running at a time
+         concurrency=1
         ) as dag:
 
     def push_initial_parameters(**kwargs):
         # gets all extractor parameters from airflow variables and and pushes them to xcom
         # this function should only be called once
 
-        videoids = Variable.get('videoids')
         volumes_video_path = Variable.get('volumes_video_path')
         volumes_features_path = Variable.get('volumes_features_path')
         volumes_file_mappings_path = Variable.get('volumes_file_mappings_path')
@@ -43,7 +41,6 @@ with DAG('hpi_extraction', default_args=default_args,
         optical_flow_window_size = Variable.get('optical_flow_window_size')
         optical_flow_top_percentile = Variable.get('optical_flow_top_percentile')
 
-        kwargs['ti'].xcom_push(key='videoids', value=videoids)
         kwargs['ti'].xcom_push(key='volumes_video_path', value=volumes_video_path)
         kwargs['ti'].xcom_push(key='volumes_features_path', value=volumes_features_path)
         kwargs['ti'].xcom_push(key='volumes_file_mappings_path', value=volumes_file_mappings_path)
@@ -87,22 +84,40 @@ with DAG('hpi_extraction', default_args=default_args,
         python_callable=push_initial_parameters,
     )
 
-    task_shotdetection = DockerOperator(
-        task_id='shotdetection',
-        image='jacobloe/shot_detection:0.1',
-        command='/video /data/ /file_mappings.tsv {{ti.xcom_pull(key="videoids")}} --sensitivity {{ti.xcom_pull(key="shotdetection_sensitivity")}}',
-        volumes=['{{ti.xcom_pull(key="volumes_video_path")}}', '{{ti.xcom_pull(key="volumes_features_path")}}', '{{ti.xcom_pull(key="volumes_file_mappings_path")}}'],
-        xcom_all=True,
-    )
+    sd = []
+    ei = []
+    ef = []
+    eas = []
+    of = []
+    videoids = list(Variable.get('videoids').replace(' ', ''))  # remove the spaces from the videoid list
+    for i, vid in enumerate(videoids):
+        # create a chain of extractor task for each videoid idividually
+        sd.append(DockerOperator(
+            task_id='shotdetection_task_{t}'.format(t=str(i)),
+            image='jacobloe/shot_detection:0.2',
+            command='/video /data/ /file_mappings.tsv {id} --sensitivity {{ti.xcom_pull(key="shotdetection_sensitivity")}}'.format(id=vid),
+            volumes=['{{ti.xcom_pull(key="volumes_video_path")}}', '{{ti.xcom_pull(key="volumes_features_path")}}', '{{ti.xcom_pull(key="volumes_file_mappings_path")}}'],
+            xcom_all=True,
+        ))
+        ei.append(BashOperator(
+            task_id='ei{}'.format(i),
+            bash_command='echo {}'.format(vid),
+        ))
+        ef.append(BashOperator(
+            task_id='ef{}'.format(i),
+            bash_command='echo {}'.format(vid),
+        ))
+        eas.append(BashOperator(
+            task_id='eas{}'.format(i),
+            bash_command='echo {}'.format(vid),
+        ))
+        of.append(BashOperator(
+            task_id='of{}'.format(i),
+            bash_command='echo {}'.format(vid),
+        ))
 
-    check_shotdetection = PythonOperator(
-        task_id='check_shotdetection',
-        python_callable=check_extractor_progress,
-    )
+        # tasks for each id are chained together sequentially
+        sd[i] >> ei[i] >> ef[i] >> eas[i] >> of[i]
 
-    t2 = BashOperator(
-        task_id='t2',
-        bash_command='sleep 40'
-    )
-
-    get_parameters >> task_shotdetection >> t2 >> check_shotdetection
+    # all task chains are dependent on a initial task
+    get_parameters >> sd
