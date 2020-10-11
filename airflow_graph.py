@@ -32,9 +32,9 @@ with DAG('hpi_extraction', default_args=default_args,
         image_extraction_trim_frames = Variable.get('image_extraction_trim_frames')
         image_extraction_frame_width = int(Variable.get('image_extraction_frame_width'))
         optical_flow_frame_width = int(Variable.get('optical_flow_frame_width'))
-        optical_flow_step_size = Variable.get('optical_flow_step_size')
-        optical_flow_window_size = Variable.get('optical_flow_window_size')
-        optical_flow_top_percentile = Variable.get('optical_flow_top_percentile')
+        optical_flow_step_size = int(Variable.get('optical_flow_step_size'))
+        optical_flow_window_size = int(Variable.get('optical_flow_window_size'))
+        optical_flow_top_percentile = int(Variable.get('optical_flow_top_percentile'))
 
         kwargs['ti'].xcom_push(key='volumes_video_path', value=volumes_video_path)
         kwargs['ti'].xcom_push(key='volumes_features_path', value=volumes_features_path)
@@ -64,7 +64,7 @@ with DAG('hpi_extraction', default_args=default_args,
         # docker commands have to be formatted without '.format()' as it clashes with the jinja templates for xcom
         sd.append(DockerOperator(
             task_id='shotdetection_task_{t}'.format(t=str(i)),
-            image='jacobloe/shot_detection:0.1',
+            image='jacobloe/shot_detection:0.2',
             command='/video /data/ /file_mappings.tsv '+vid +
                     ' --sensitivity {{ti.xcom_pull(key="shotdetection_sensitivity")}}',
             volumes=['{{ti.xcom_pull(key="volumes_video_path")}}', '{{ti.xcom_pull(key="volumes_features_path")}}', '{{ti.xcom_pull(key="volumes_file_mappings_path")}}'],
@@ -84,7 +84,7 @@ with DAG('hpi_extraction', default_args=default_args,
             task_id='feature_extraction_{t}'.format(t=str(i)),
             image='jacobloe/extract_features:0.2',
             command='/video/ /data/ /file_mappings.tsv '+vid +
-                    ' --file_extension {{ti.xcom_pull(key="extractor_file_extension"}}',
+                    ' --file_extension {{ti.xcom_pull(key="extractor_file_extension")}}',
             volumes=['{{ti.xcom_pull(key="volumes_video_path")}}', '{{ti.xcom_pull(key="volumes_features_path")}}',
                      '{{ti.xcom_pull(key="volumes_file_mappings_path")}}', '/home/.keras/:/root/.keras'],
             xcom_all=True,
@@ -93,7 +93,7 @@ with DAG('hpi_extraction', default_args=default_args,
             task_id='aspect_ratio_extraction_{t}'.format(t=str(i)),
             image='jacobloe/extract_aspect_ratio:0.2',
             command='/video/ /data/ /file_mappings.tsv '+vid +
-                    ' --file_extension {{ti.xcom_pull(key="extractor_file_extension"}}',
+                    ' --file_extension {{ti.xcom_pull(key="extractor_file_extension")}}',
             volumes=['{{ti.xcom_pull(key="volumes_video_path")}}', '{{ti.xcom_pull(key="volumes_features_path")}}', '{{ti.xcom_pull(key="volumes_file_mappings_path")}}'],
             xcom_all=True,
         ))
@@ -101,10 +101,10 @@ with DAG('hpi_extraction', default_args=default_args,
             task_id='extract_optical_flow_{t}'.format(t=str(i)),
             image='jacobloe/optical_flow:0.2',
             command='/video/ /data/ /file_mappings.tsv '+vid +
-                    '--frame_width {{ti.xcom_pull(key="optical_flow_frame_width"}} '
-                    '--step_size {{ti.xcom_pull(key="optical_flow_step_size"}} '
-                    '--window_size {{ti.xcom_pull(key="optical_flow_window_size"}} '
-                    '--top_percentile {{ti.xcom_pull(key="optical_flow_top_percentile"}}',
+                    '--frame_width {{ti.xcom_pull(key="optical_flow_frame_width")}} '
+                    '--step_size {{ti.xcom_pull(key="optical_flow_step_size")}} '
+                    '--window_size {{ti.xcom_pull(key="optical_flow_window_size")}} '
+                    '--top_percentile {{ti.xcom_pull(key="optical_flow_top_percentile")}}',
             volumes=['{{ti.xcom_pull(key="volumes_video_path")}}', '{{ti.xcom_pull(key="volumes_features_path")}}', '{{ti.xcom_pull(key="volumes_file_mappings_path")}}'],
             xcom_all=True,
         ))
