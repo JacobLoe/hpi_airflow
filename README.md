@@ -21,3 +21,5 @@ https://airflow.apache.org/docs/stable/installation.html
 8: to start the graph use the button "Trigger DAG" on the home screen
 
 9: use "Graph View" to view progress of the graph during runtime
+    
+    9.1 click on a task and then on "View Log" to see the terminal output of a task
