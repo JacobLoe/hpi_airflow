@@ -58,21 +58,23 @@ with DAG('hpi_extraction', default_args=default_args,
     ef = []
     eas = []
     of = []
-    videoids = list(Variable.get('videoids').replace(' ', ''))  # remove the spaces from the videoid list
+
+    videoids = list(Variable.get('videoids').split(' '))  # remove the spaces from the videoid list
     for i, vid in enumerate(videoids):
         # create a chain of extractor task for each videoid individually
         # docker commands have to be formatted without '.format()' as it clashes with the jinja templates for xcom
+        task_id = vid[:8]
         sd.append(DockerOperator(
-            task_id='shotdetection_task_{t}'.format(t=str(i)),
-            image='jacobloe/shot_detection:0.2',
+            task_id='shotdetection_task_{t}'.format(t=task_id),
+            image='jacobloe/shot_detection:0.4',
             command='/video /data/ /file_mappings.tsv '+vid +
                     ' --sensitivity {{ti.xcom_pull(key="shotdetection_sensitivity")}}',
             volumes=['{{ti.xcom_pull(key="volumes_video_path")}}', '{{ti.xcom_pull(key="volumes_features_path")}}', '{{ti.xcom_pull(key="volumes_file_mappings_path")}}'],
             xcom_all=True,
         ))
         ei.append(DockerOperator(
-            task_id='image_extraction_{t}'.format(t=str(i)),
-            image='jacobloe/extract_images:0.2',
+            task_id='image_extraction_{t}'.format(t=task_id),
+            image='jacobloe/extract_images:0.4',
             command='/video/ /data/ /file_mappings.tsv '+vid +
                     ' --trim_frames {{ti.xcom_pull(key="image_extraction_trim_frames")}} '
                     '--frame_width {{ti.xcom_pull(key="image_extraction_frame_width")}} '
@@ -81,27 +83,27 @@ with DAG('hpi_extraction', default_args=default_args,
             xcom_all=True,
         ))
         ef.append(DockerOperator(
-            task_id='feature_extraction_{t}'.format(t=str(i)),
-            image='jacobloe/extract_features:0.2',
-            command='/video/ /data/ /file_mappings.tsv '+vid +
+            task_id='feature_extraction_{t}'.format(t=task_id),
+            image='jacobloe/extract_features:0.4',
+            command='/data/ /file_mappings.tsv '+vid +
                     ' --file_extension {{ti.xcom_pull(key="extractor_file_extension")}}',
             volumes=['{{ti.xcom_pull(key="volumes_video_path")}}', '{{ti.xcom_pull(key="volumes_features_path")}}',
                      '{{ti.xcom_pull(key="volumes_file_mappings_path")}}', '/home/.keras/:/root/.keras'],
             xcom_all=True,
         ))
         eas.append(DockerOperator(
-            task_id='aspect_ratio_extraction_{t}'.format(t=str(i)),
-            image='jacobloe/extract_aspect_ratio:0.2',
-            command='/video/ /data/ /file_mappings.tsv '+vid +
+            task_id='aspect_ratio_extraction_{t}'.format(t=task_id),
+            image='jacobloe/extract_aspect_ratio:0.4',
+            command='/video /data/ /file_mappings.tsv '+vid +
                     ' --file_extension {{ti.xcom_pull(key="extractor_file_extension")}}',
             volumes=['{{ti.xcom_pull(key="volumes_video_path")}}', '{{ti.xcom_pull(key="volumes_features_path")}}', '{{ti.xcom_pull(key="volumes_file_mappings_path")}}'],
             xcom_all=True,
         ))
         of.append(DockerOperator(
-            task_id='extract_optical_flow_{t}'.format(t=str(i)),
-            image='jacobloe/optical_flow:0.2',
+            task_id='extract_optical_flow_{t}'.format(t=task_id),
+            image='jacobloe/optical_flow:0.4',
             command='/video/ /data/ /file_mappings.tsv '+vid +
-                    '--frame_width {{ti.xcom_pull(key="optical_flow_frame_width")}} '
+                    ' --frame_width {{ti.xcom_pull(key="optical_flow_frame_width")}} '
                     '--step_size {{ti.xcom_pull(key="optical_flow_step_size")}} '
                     '--window_size {{ti.xcom_pull(key="optical_flow_window_size")}} '
                     '--top_percentile {{ti.xcom_pull(key="optical_flow_top_percentile")}}',
