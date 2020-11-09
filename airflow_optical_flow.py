@@ -5,6 +5,7 @@ from airflow.utils.dates import days_ago
 from airflow.models import Variable
 from rest_requests import get_videos
 
+DAG_ID = 'optical_flow'
 
 # default arguments inherited by each task
 default_args = {
@@ -12,34 +13,63 @@ default_args = {
     'depends_on_past': False,
     'start_date': days_ago(1),
     'provide_context': True,    # is needed for tasks to communicate via xcom
-    'schedule_interval': None,
-    'max_active_runs': 1,   # prevents more than one graph from running at a time
-    'concurrency': 1
 }
 
 
-with DAG('optical_flow', default_args=default_args,
+def push_initial_parameters(**context):
+    # gets all relevant extractor parameters from the dag configuration and and pushes them to xcom
+    # this function should only be called once
+
+    volumes_video_path = context['dag_run'].conf['volumes_video_path']
+    volumes_features_path = context['dag_run'].conf['volumes_features_path']
+    volumes_file_mappings_path = context['dag_run'].conf['volumes_file_mappings_path']
+
+    optical_flow_frame_width = context['dag_run'].conf['optical_flow_frame_width']
+    optical_flow_step_size = context['dag_run'].conf['optical_flow_step_size']
+    optical_flow_window_size = context['dag_run'].conf['optical_flow_window_size']
+    optical_flow_top_percentile = context['dag_run'].conf['optical_flow_top_percentile']
+    optical_flow_force_run = context['dag_run'].conf['optical_flow_force_run']
+
+    # xcoms are automatically mapped to the task_id and dag_id in which the created to prevent an incorrect pull
+    context['ti'].xcom_push(key='volumes_video_path', value=volumes_video_path)
+    context['ti'].xcom_push(key='volumes_features_path', value=volumes_features_path)
+    context['ti'].xcom_push(key='volumes_file_mappings_path', value=volumes_file_mappings_path)
+
+    context['ti'].xcom_push(key='optical_flow_frame_width', value=optical_flow_frame_width)
+    context['ti'].xcom_push(key='optical_flow_step_size', value=optical_flow_step_size)
+    context['ti'].xcom_push(key='optical_flow_window_size', value=optical_flow_window_size)
+    context['ti'].xcom_push(key='optical_flow_top_percentile', value=optical_flow_top_percentile)
+    context['ti'].xcom_push(key='optical_flow_force_run', value=optical_flow_force_run)
+
+
+with DAG(DAG_ID, default_args=default_args,
          schedule_interval=None,
          max_active_runs=1,  # prevents more than one graph from running at a time
          concurrency=1) as dag:
-    task_id = '0'
-    vid = '0'
 
-    init = PythonOperator(
+    get_params = PythonOperator(
+        task_id='push_params',
+        python_callable=push_initial_parameters
+    )
+
+    init_video = PythonOperator(
         task_id='get_videos',
         python_callable=get_videos
     )
+
     optical_flow = (DockerOperator(
-        task_id='extract_optical_flow_{t}'.format(t=task_id),
-        image='jacobloe/optical_flow:0.4',
-        command='/video/ /data/ /file_mappings.tsv ' + vid +
-                ' --frame_width {{ti.xcom_pull(key="optical_flow_frame_width")}}'
-                ' --step_size {{ti.xcom_pull(key="optical_flow_step_size")}}'
-                ' --window_size {{ti.xcom_pull(key="optical_flow_window_size")}}'
-                ' --top_percentile {{ti.xcom_pull(key="optical_flow_top_percentile")}}'
-                ' --force_run {{ti.xcom_pull(key="optical_flow_force_run")}}',
-        volumes=['{{ti.xcom_pull(key="volumes_video_path")}}', '{{ti.xcom_pull(key="volumes_features_path")}}', '{{ti.xcom_pull(key="volumes_file_mappings_path")}}'],
+        task_id='extract_optical_flow',
+        image='jacobloe/optical_flow:0.5',
+        command='/video/ /data/ /file_mappings.tsv {{ti.xcom_pull(key="videoid", dag_id='+DAG_ID+')}}'
+                ' --frame_width {{ti.xcom_pull(key="optical_flow_frame_width", dag_id='+DAG_ID+')}}'
+                ' --step_size {{ti.xcom_pull(key="optical_flow_step_size", dag_id='+DAG_ID+')}}'
+                ' --window_size {{ti.xcom_pull(key="optical_flow_window_size", dag_id='+DAG_ID+')}}'
+                ' --top_percentile {{ti.xcom_pull(key="optical_flow_top_percentile", dag_id='+DAG_ID+')}}'
+                ' --force_run {{ti.xcom_pull(key="optical_flow_force_run", dag_id='+DAG_ID+')}}',
+        volumes=['{{ti.xcom_pull(key="volumes_video_path", dag_id='+DAG_ID+')}}',
+                 '{{ti.xcom_pull(key="volumes_features_path", dag_id='+DAG_ID+')}}',
+                 '{{ti.xcom_pull(key="volumes_file_mappings_path", dag_id='+DAG_ID+')}}'],
         xcom_all=True,
     ))
 
-    init >> optical_flow
+    get_params >> init_video >> optical_flow
