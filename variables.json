@@ -1,7 +1,5 @@
 {
-    "volumes_video_path": "/home/jacob/Downloads/hpi/videos:/video:ro",
     "volumes_features_path":  "/home/jacob/Downloads/hpi/hpi_airflow/static/features_videos:/data",
-    "volumes_file_mappings_path": "/home/jacob/Downloads/hpi/videos/file_mappings.tsv:/file_mappings.tsv:ro",
     "extractor_file_extension": ".jpeg",
     "shotdetection_sensitivity": "60",
     "shotdetection_force_run": "False",
@@ -14,5 +12,7 @@
     "optical_flow_step_size": "300",
     "optical_flow_window_size": "300",
     "optical_flow_top_percentile": "5",
-    "optical_flow_force_run": "False"
+    "optical_flow_force_run": "False",
+    "get_videos_force_run": "False",
+    "dag_id": "shotdetection"
 }

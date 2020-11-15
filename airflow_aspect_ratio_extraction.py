@@ -3,7 +3,7 @@ from airflow.operators.python_operator import PythonOperator
 from docker_operator import DockerOperator
 from airflow.utils.dates import days_ago
 from airflow.models import Variable
-from rest_requests import get_videos
+from rest_requests_tasks import get_videos
 
 DAG_ID = 'aspect_ratio_extraction'
 
