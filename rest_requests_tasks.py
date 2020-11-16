@@ -2,14 +2,19 @@ import requests
 import hashlib
 import os
 import shutil
-
+import urllib
 
 def get_video(**context):
 
-    dag_id = context['dag_run'].conf['dag_id']
-    videoid = context['ti'].xcom_pull(key='videoid', dag_id=dag_id)
+    # get the id of the current dag that is used
+    dag_id = 'shotdetection'
+    # dag_id = context['dag_run'].conf['dag_id']
+
+    # features_root = context['ti'].xcom_pull(key='volumes_features_path', dag_id=dag_id)
+    features_root = '/home/jacob/Downloads/hpi/videos'
+
+    # videoid = context['ti'].xcom_pull(key='videoid', dag_id=dag_id)
     # get the videoid given with trigger from the config
-    # videoid = "294704e"
     videoid = "6ffaf51" #Occupy Wallstreet
     media_base_url = "http://ada.filmontology.org/api_dev/media/"
 
@@ -32,10 +37,10 @@ def get_video(**context):
         raise Exception('Something went wrong')
 
     # create the folder to save the video to
-    video_cache = os.path.join(context['ti'].xcom_pull(key='videoid', dag_id=dag_id), video_checksum, 'media')
+    video_cache = os.path.join(features_root, video_checksum, 'media')
     done_file = os.path.join(video_cache, '.done')
     # download only if the .done-file doesn't exist. or the .done-file reads a different checksum
-    if not open(done_file, 'r').read() == video_checksum:
+    if not os.path.isfile(done_file) or not open(done_file, 'r').read() == video_checksum:
         # create the video_cache folder, delete the old one if needed
         if not os.path.isdir(video_cache):
             os.makedirs(video_cache)
@@ -45,11 +50,12 @@ def get_video(**context):
         # the video is saved as "checksum.mp4"
         video_file = os.path.join(video_cache, video_checksum + '.mp4')
 
-        # FIXME download video
+        urllib.request.urlretrieve(video_url, video_file)
 
         # compute the checksum for the downloaded video
         movie_bytes = open(video_file, 'rb').read()
         video_new_checksum = hashlib.sha256(movie_bytes).hexdigest()
+        print('checksum: ', video_checksum, '\n', 'downloaded checksum: ', video_new_checksum)
         print('new, old:', type(video_new_checksum), type(video_checksum))
         # if the checksums are equal write the checksum in a .done-file
         # and set the checksum as the id for the video
@@ -66,7 +72,7 @@ def get_video(**context):
         pass
 
     # push checksum to xcom
-    context['ti'].xcom_push(key='videoid', value=videoid)
+    # context['ti'].xcom_push(key='videoid', value=videoid)
 
 
 if __name__ == '__main__':
