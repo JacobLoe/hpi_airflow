@@ -4,9 +4,7 @@ import json
 
 def trigger_dag(dag_id, videoid, dag_configuration_json):
     # triggers the DAG dag_id with the given dag_configuration_json
-    dag_id = 'shotdetection'
-    # FIXME hardcoded id just for testing
-    videoid = "6ffaf51" #Occupy Wallstreet
+
 
     headers = {
         'Cache-Control': 'no-cache',
@@ -28,8 +26,9 @@ def trigger_dag(dag_id, videoid, dag_configuration_json):
     response = requests.post(url, headers=headers, data=data)
 
 
-def get_dag_status():
-    # returns what graphs run at the momen and potential erros
+def get_dag_status(dag_id):
+    # returns what graphs run at the momen and potential errors
+
     pass
 
 
@@ -39,4 +38,7 @@ def get_queue():
 
 
 if __name__ == '__main__':
-    trigger_dag(0, 0, 0)
+    dag_id = 'shotdetection'
+    # FIXME hardcoded id just for testing
+    videoid = "6ffaf51" #Occupy Wallstreet
+    trigger_dag(dag_id, videoid, )

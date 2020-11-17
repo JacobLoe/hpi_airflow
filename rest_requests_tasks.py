@@ -1,21 +1,24 @@
 import requests
 import hashlib
-import os
 import shutil
 import urllib
+import os
+
 
 def get_video(**context):
 
     # get the id of the current dag that is used
-    dag_id = 'shotdetection'
-    # dag_id = context['dag_run'].conf['dag_id']
+    # dag_id = 'shotdetection'
+    dag_id = context['dag_run'].conf['dag_id']
 
-    # features_root = context['ti'].xcom_pull(key='volumes_features_path', dag_id=dag_id)
-    features_root = '/home/jacob/Downloads/hpi/videos'
+    #
+    features_root = os.path.split(context['ti'].xcom_pull(key='volumes_features_path', dag_id=dag_id))[0][:-1]
+    print('features_root: ', features_root)
+    # features_root = '/home/jacob/Downloads/hpi/videos'
 
-    # videoid = context['ti'].xcom_pull(key='videoid', dag_id=dag_id)
     # get the videoid given with trigger from the config
-    videoid = "6ffaf51" #Occupy Wallstreet
+    videoid = context['ti'].xcom_pull(key='videoid', dag_id=dag_id)
+    # videoid = "6ffaf51" #Occupy Wallstreet
     media_base_url = "http://ada.filmontology.org/api_dev/media/"
 
     try:
@@ -38,6 +41,7 @@ def get_video(**context):
 
     # create the folder to save the video to
     video_cache = os.path.join(features_root, video_checksum, 'media')
+    print('video_cache', video_cache)
     done_file = os.path.join(video_cache, '.done')
     # download only if the .done-file doesn't exist. or the .done-file reads a different checksum
     if not os.path.isfile(done_file) or not open(done_file, 'r').read() == video_checksum:
@@ -72,7 +76,7 @@ def get_video(**context):
         pass
 
     # push checksum to xcom
-    # context['ti'].xcom_push(key='videoid', value=videoid)
+    context['ti'].xcom_push(key='videoid', value=videoid)
 
 
 if __name__ == '__main__':
