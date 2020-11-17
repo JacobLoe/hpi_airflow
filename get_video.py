@@ -8,17 +8,14 @@ import os
 def get_video(**context):
 
     # get the id of the current dag that is used
-    # dag_id = 'shotdetection'
     dag_id = context['dag_run'].conf['dag_id']
 
     #
     features_root = os.path.split(context['ti'].xcom_pull(key='volumes_features_path', dag_id=dag_id))[0][:-1]
     print('features_root: ', features_root)
-    # features_root = '/home/jacob/Downloads/hpi/videos'
 
     # get the videoid given with trigger from the config
     videoid = context['ti'].xcom_pull(key='videoid', dag_id=dag_id)
-    # videoid = "6ffaf51" #Occupy Wallstreet
     media_base_url = "http://ada.filmontology.org/api_dev/media/"
 
     try:
@@ -60,19 +57,17 @@ def get_video(**context):
         movie_bytes = open(video_file, 'rb').read()
         video_new_checksum = hashlib.sha256(movie_bytes).hexdigest()
         print('checksum: ', video_checksum, '\n', 'downloaded checksum: ', video_new_checksum)
-        print('new, old:', type(video_new_checksum), type(video_checksum))
         # if the checksums are equal write the checksum in a .done-file
         # and set the checksum as the id for the video
         if video_new_checksum == video_checksum:
-            with open(done_file) as f:
+            with open(done_file, 'w') as f:
                 f.write(str(video_new_checksum))
             videoid = video_new_checksum
         else:
             raise Exception('Something went wrong with the download for the id: "{video_checksum}"\n.'
                             ' The checksum for the downloaded file does not match the checksum from the server'.format(video_checksum=video_checksum))
     else:
-        # if the checksums are the same, assume that the video was
-        # previously downloaded correctly
+        # if the checksums are the same, assume that the video was previously downloaded correctly
         pass
 
     # push checksum to xcom
