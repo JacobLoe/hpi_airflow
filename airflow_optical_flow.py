@@ -2,8 +2,7 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from docker_operator import DockerOperator
 from airflow.utils.dates import days_ago
-from airflow.models import Variable
-from rest_requests_tasks import get_videos
+from get_video import get_video
 
 DAG_ID = 'optical_flow'
 
@@ -54,7 +53,7 @@ with DAG(DAG_ID, default_args=default_args,
 
     init_video = PythonOperator(
         task_id='get_videos',
-        python_callable=get_videos
+        python_callable=get_video
     )
 
     optical_flow = (DockerOperator(

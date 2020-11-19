@@ -2,7 +2,7 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from docker_operator import DockerOperator
 from airflow.utils.dates import days_ago
-from rest_requests_tasks import get_video
+from get_video import get_video
 
 DAG_ID = 'shotdetection'
 
@@ -47,17 +47,17 @@ with DAG(DAG_ID, default_args=default_args,
          concurrency=1) as dag:
 
     task_push_config_to_xcom = PythonOperator(
-        task_id='push_params',
+        task_id='push_config_to_xcom',
         python_callable=push_config_to_xcom
     )
 
     task_get_video = PythonOperator(
-        task_id='get_videos',
+        task_id='get_video',
         python_callable=get_video
     )
 
     task_shotdetection = (DockerOperator(
-        task_id='shotdetection_task',
+        task_id='shotdetection',
         image='jacobloe/shot_detection:0.6',
         command='/data/ {{ti.xcom_pull(key="videoid", dag_id='+DAG_ID+')}}'
                 ' --sensitivity {{ti.xcom_pull(key="shotdetection_sensitivity", dag_id='+DAG_ID+')}}'
