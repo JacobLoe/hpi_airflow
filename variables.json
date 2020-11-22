@@ -1,5 +1,5 @@
 {
-    "volumes_features_path":  "/data:/data",
+    "volumes_data_path":  "/data:/data",
     "extractor_file_extension": ".jpeg",
     "shotdetection_sensitivity": "60",
     "shotdetection_force_run": "False",
@@ -13,6 +13,5 @@
     "optical_flow_window_size": "300",
     "optical_flow_top_percentile": "5",
     "optical_flow_force_run": "False",
-    "get_videos_force_run": "False",
-    "dag_id": "shotdetection"
+    "get_videos_force_run": "False"
 }

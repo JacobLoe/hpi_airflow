@@ -6,19 +6,24 @@ import os
 
 
 def get_video(**context):
+    # downloads a video for a given a id and returns it checksum to airflow
 
     # get the id of the current dag that is used
     dag_id = context['dag_run'].conf['dag_id']
+    print('dag_id', dag_id)
 
-    #
-    features_root = os.path.split(context['ti'].xcom_pull(key='volumes_features_path', dag_id=dag_id))[0][:-1]
-    print('features_root: ', features_root)
+    data_root = os.path.split(context['ti'].xcom_pull(key='volumes_data_path', dag_id=dag_id))
+    print('volumes_data_path: ', data_root)
+    data_root = data_root[0][:-1]
+    print('data_root: ', data_root)
 
     # get the videoid given with trigger from the config
     videoid = context['ti'].xcom_pull(key='videoid', dag_id=dag_id)
+    print('videoid', videoid)
     media_base_url = "http://ada.filmontology.org/api_dev/media/"
 
     try:
+        # get the sha256-checksum and url to the video for the id
         r = requests.get(media_base_url + videoid)
         if r.status_code == 200:
             data = r.json()
@@ -37,7 +42,7 @@ def get_video(**context):
         raise Exception('Something went wrong')
 
     # create the folder to save the video to
-    video_cache = os.path.join(features_root, video_checksum, 'media')
+    video_cache = os.path.join(data_root, video_checksum, 'media')
     print('video_cache', video_cache)
     done_file = os.path.join(video_cache, '.done')
     # download only if the .done-file doesn't exist. or the .done-file reads a different checksum
@@ -62,7 +67,6 @@ def get_video(**context):
         if video_new_checksum == video_checksum:
             with open(done_file, 'w') as f:
                 f.write(str(video_new_checksum))
-            videoid = video_new_checksum
         else:
             raise Exception('Something went wrong with the download for the id: "{video_checksum}"\n.'
                             ' The checksum for the downloaded file does not match the checksum from the server'.format(video_checksum=video_checksum))
@@ -71,7 +75,7 @@ def get_video(**context):
         pass
 
     # push checksum to xcom
-    context['ti'].xcom_push(key='videoid', value=videoid)
+    context['ti'].xcom_push(key='video_checksum', value=video_checksum)
 
 
 if __name__ == '__main__':

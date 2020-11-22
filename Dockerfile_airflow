@@ -1,5 +1,5 @@
 # docker build -f Dockerfile_airflow -t jacobloe/airflow:0.1 .
-# docker run --rm -it -v $(pwd)/../static/data:/data -p 8080:8080 --name airflow --entrypoint /bin/bash jacobloe/airflow:0.1
+# docker run --rm -it -v ../static/data:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --name airflow --entrypoint /bin/bash jacobloe/airflow:0.1
 # airflow scheduler & airflow webserver -p 8080
 FROM python:3.8.3
 
@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # install airflow for python 3.8
 RUN pip3 install --trusted-host pypi.python.org apache-airflow==1.10.12 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-1.10.12/constraints-3.8.txt"
-RUN pip3 install docker
+RUN pip3 install docker==4.3.1
 RUN apt update && apt install -y vim
 
 # initialise the database for airflow

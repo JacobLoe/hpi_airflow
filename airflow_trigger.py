@@ -6,7 +6,7 @@ def trigger_dag(dag_id, videoid, dag_configuration, headers):
     # triggers the DAG dag_id with the given dag_configuration_json
     # add the dag_id and the videoid to the dag_configuration_json
 
-    dag_configuration['DAG_ID'] = dag_id
+    dag_configuration['dag_id'] = dag_id
     dag_configuration['videoid'] = str(videoid)
 
     dag_configuration_json = json.dumps(dag_configuration)
