@@ -1,12 +1,46 @@
+# docker build -f Dockerfile_airflow -t jacobloe/airflow:0.1 .
+# docker run --rm -it -v $(pwd)/../static/data:/data -p 8080:8080 --name airflow --entrypoint /bin/bash jacobloe/airflow:0.1
+# airflow scheduler & airflow webserver -p 8080
 FROM python:3.8.3
 
 ENV DEBIAN_FRONTEND noninteractive
 
+# install airflow for python 3.8
 RUN pip3 install --trusted-host pypi.python.org apache-airflow==1.10.12 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-1.10.12/constraints-3.8.txt"
+RUN pip3 install docker
+RUN apt update && apt install -y vim
 
-COPY airflow_graph.py /root/dags/
-Vole
+# initialise the database for airflow
+# this also creates the airflow folder with the configuration in root
+RUN airflow initdb
+
+# FIXME change sed from using line numbers to exact text
+# edit the airflow configuration file to let airflow exclude example dags
+# sed -i '/load examples = True/c load_examples = False' /root/airflow/airflow.cfg
+RUN sed -i '136s/.*/load_examples = False/' /root/airflow/airflow.cfg
+# all dags can be triggered without needing to unpause them first
+RUN sed -i '128s/.*/dags_are_paused_at_creation = False/' /root/airflow/airflow.cfg
+# FIXME this done to allow all connections to the server, ideally this would be changed to work with username/password
+RUN sed -i '255s/.*/auth_backend = airflow.api.auth.backend.default/' /root/airflow/airflow.cfg
+
+RUN mkdir /root/airflow/dags
+
+# dag scripte
+COPY airflow_shotdetection.py /root/airflow/dags
+# FIXME copy remaining dag scripts
+
+#
+COPY docker_operator.py /root/airflow/dags
+COPY get_video.py /root/airflow/dags
+
+# initialising the database again excludes the example dags and adds the new dags
+RUN airflow initdb
+
+# expose port for the airflow webserver
+EXPOSE 8080
+
+VOLUME "/features"
 
 WORKDIR /root
 
-ENTRYPOINT ["python airflow_graph.py"]
+ENTRYPOINT ["airflow scheduler"] #& airflow webserver -p 8080"]
