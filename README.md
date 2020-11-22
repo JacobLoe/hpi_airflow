@@ -1,25 +1,9 @@
-1: install airflow version 1.10.12
-https://airflow.apache.org/docs/stable/installation.html
+1. build the airflow docker image with: "docker build -f Dockerfile_airflow -t jacobloe/airflow:0.1 ."
+2. the image is started with:  
+"docker run --rm -it -v $(pwd)/PATH_TO_DATA:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --name airflow --entrypoint /bin/bash jacobloe/airflow:0.1"
+3. in the container run "airflow scheduler & airflow webserver -p 8080" to start airflow 
+4. outside of the container use "python airflow_trigger" to start a shotdetection graph
+5. visit "http://0.0.0.0:8080/" in your browser to see the progress of the DAG
+6. use "Graph View" to view progress of the graph during runtime
     
-    1.1 run "pip3 install docker" for the docker_operator.py
-    
-2: run airflow in terminal with 'airflow' to create an folder for logs and configuration at ~/airflow
-
-3: go to the new folder and open airflow.cfg
-
-    change "dags_folder" to the directoy of the repository. The path has to be absolute
-    change "load_examples" to False (not strictly necessary, but removes clutter in the ui)
-
-4: run "airflow initdb" to add the graph to the airflow database
-    
-5: execute "airflow webserver -p 8080" in the terminal, then "http://0.0.0.0:8080/" in the browser to track the progess of the DAG visually
-
-6: execute "airflow scheduler" in the terminal
-
-7: on the webserver under "http://0.0.0.0:8080/variable/list/" import the "variables.json"
-
-8: to start the graph use the button "Trigger DAG" on the home screen
-
-9: use "Graph View" to view progress of the graph during runtime
-    
-    9.1 click on a task and then on "View Log" to see the terminal output of a task
+    6.1 click on a task and then on "View Log" to see the terminal output of a task

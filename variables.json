@@ -1,5 +1,5 @@
 {
-    "volumes_features_path":  "/home/jacob/Downloads/hpi/hpi_airflow/static/features_videos:/data",
+    "volumes_features_path":  "/data:/data",
     "extractor_file_extension": ".jpeg",
     "shotdetection_sensitivity": "60",
     "shotdetection_force_run": "False",
