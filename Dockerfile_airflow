@@ -14,18 +14,16 @@ RUN apt update && apt install -y vim
 # this also creates the airflow folder with the configuration in root
 RUN airflow initdb
 
-# FIXME change sed from using line numbers to exact text
 # edit the airflow configuration file to let airflow exclude example dags
-# sed -i '/load examples = True/c load_examples = False' /root/airflow/airflow.cfg
-RUN sed -i '136s/.*/load_examples = False/' /root/airflow/airflow.cfg
+RUN sed -i '/load_examples = True/c load_examples = False' /root/airflow/airflow.cfg
 # all dags can be triggered without needing to unpause them first
-RUN sed -i '128s/.*/dags_are_paused_at_creation = False/' /root/airflow/airflow.cfg
-# FIXME this done to allow all connections to the server, ideally this would be changed to work with username/password
-RUN sed -i '255s/.*/auth_backend = airflow.api.auth.backend.default/' /root/airflow/airflow.cfg
+RUN sed -i '/dags_are_paused_at_creation = True/c dags_are_paused_at_creation = False' /root/airflow/airflow.cfg
+# FIXME this done temporarily to allow all connections to the server, ideally this would be changed to work with username/password
+RUN sed -i '/auth_backend = airflow.api.auth.backend.deny_all/c auth_backend = airflow.api.auth.backend.default' /root/airflow/airflow.cfg
 
 RUN mkdir /root/airflow/dags
 
-# dag scripte
+# dag scripts
 COPY airflow_shotdetection.py /root/airflow/dags
 # FIXME copy remaining dag scripts
 
