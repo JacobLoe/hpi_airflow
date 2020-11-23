@@ -1,5 +1,6 @@
 # docker build -f Dockerfile_airflow -t jacobloe/airflow:0.1 .
-# docker run --rm -it -v ../static/data:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --name airflow --entrypoint /bin/bash jacobloe/airflow:0.1
+# docker run --rm -it -v /static/data:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 jacobloe/airflow:0.1
+# --entrypoint /bin/bash
 # airflow scheduler & airflow webserver -p 8080
 FROM python:3.8.3
 
@@ -8,6 +9,7 @@ ENV DEBIAN_FRONTEND noninteractive
 # install airflow for python 3.8
 RUN pip3 install --trusted-host pypi.python.org apache-airflow==1.10.12 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-1.10.12/constraints-3.8.txt"
 RUN pip3 install docker==4.3.1
+# FIXME vim is not supposed to be in the final dockerfile
 RUN apt update && apt install -y vim
 
 # initialise the database for airflow
@@ -16,29 +18,32 @@ RUN airflow initdb
 
 # edit the airflow configuration file to let airflow exclude example dags
 RUN sed -i '/load_examples = True/c load_examples = False' /root/airflow/airflow.cfg
-# all dags can be triggered without needing to unpause them first
+# now all dags can be triggered without needing to unpause them first
 RUN sed -i '/dags_are_paused_at_creation = True/c dags_are_paused_at_creation = False' /root/airflow/airflow.cfg
 # FIXME this done temporarily to allow all connections to the server, ideally this would be changed to work with username/password
 RUN sed -i '/auth_backend = airflow.api.auth.backend.deny_all/c auth_backend = airflow.api.auth.backend.default' /root/airflow/airflow.cfg
 
+# create the folder in which airflow is lokking for dags
 RUN mkdir /root/airflow/dags
 
 # dag scripts
 COPY airflow_shotdetection.py /root/airflow/dags
 # FIXME copy remaining dag scripts
 
-#
+# copy the scripts that are used by all dags for tasks
 COPY docker_operator.py /root/airflow/dags
 COPY get_video.py /root/airflow/dags
 
-# initialising the database again excludes the example dags and adds the new dags
+# initialising the database again now excludes the example dags and adds the new dags as specified in the airflow.cfg
 RUN airflow initdb
 
 # expose port for the airflow webserver
 EXPOSE 8080
 
-VOLUME "/features"
+VOLUME "/data"
 
 WORKDIR /root
 
-ENTRYPOINT ["airflow scheduler"] #& airflow webserver -p 8080"]
+# start the scheduler so dags can be triggered and start the webserver to allow supervision
+# FIXME I don't know if this is the most elegant way to do this,
+ENTRYPOINT airflow scheduler & airflow webserver -p 8080

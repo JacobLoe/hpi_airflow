@@ -29,7 +29,7 @@ def get_video(**context):
             data = r.json()
             video_url = data.get('videourl')
             video_checksum = data.get('sha256sum')
-            print(video_url, video_checksum)
+            print(video_url,'\n' ,video_checksum)
         else:
             pass
             # # FIXME: error handling - z.B.:
@@ -55,7 +55,7 @@ def get_video(**context):
             os.makedirs(video_cache)
         # the video is saved as "checksum.mp4"
         video_file = os.path.join(video_cache, video_checksum + '.mp4')
-
+        print('video_file: ', video_file)
         urllib.request.urlretrieve(video_url, video_file)
 
         # compute the checksum for the downloaded video

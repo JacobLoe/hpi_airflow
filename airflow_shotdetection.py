@@ -57,7 +57,8 @@ with DAG(DAG_ID, default_args=default_args,
         command='/data {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --sensitivity {{ti.xcom_pull(key="shotdetection_sensitivity", dag_id='+DAG_ID+')}}'
                 ' --force_run {{ti.xcom_pull(key="shotdetection_force_run", dag_id='+DAG_ID+')}}',
-        volumes=['{{ti.xcom_pull(key="volumes_data_path", dag_id='+DAG_ID+')}}'],
+        volumes=['{{ti.xcom_pull(key="volumes_data_path", dag_id='+DAG_ID+')}}',
+                 '/var/run/docker.sock:/var/run/docker.sock'],
         xcom_all=True,
     ))
     task_push_config_to_xcom >> task_get_video >> task_shotdetection

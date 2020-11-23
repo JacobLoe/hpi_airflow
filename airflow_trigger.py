@@ -21,31 +21,67 @@ def trigger_dag(dag_id, videoid, dag_configuration, headers):
 
 def get_dag_status(dag_id, headers):
     # returns what graphs run at the moment and potential errors
-
-    # info about all dag runs: dag_ids, execution_dates, state
+    taskid = 'shotdetection'
+    # info about all dag runs: dag_ids, execution_dates, state (running, failed, completed)
+    # dags are identified
     # url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs'.format(dag_id=dag_id)   # info
-    # info about a specific task, parameters
-    # url = 'http://localhost:8080/api/experimental/dags/{dag_id}/tasks/shotdetection'.format(dag_id=dag_id)
-    # just gives info about the latest runs and less than the first command
+    # response = requests.get(url, headers=headers)
+    # j = json.loads(response.content.decode('utf8'))
+    # print('dag_runs')
+    # for k in j:
+    #     print(k)
+    # print('\n')
+    # info about a specific task, task parameters, kinda useless
+    # can return the command that was used for starting a container, but no the specific values
+    # url = 'http://localhost:8080/api/experimental/dags/{dag_id}/tasks/{taskid}'.format(dag_id=dag_id, taskid=taskid)
+    # response = requests.get(url, headers=headers)
+    # j = json.loads(response.content.decode('utf8'))
+    # print(j)
+    # print('\n')
+    # just gives same info (excluding the state) about the latest run and less than the first command, really useless
     # url = 'http://localhost:8080/api/experimental/latest_runs'
-    url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/2020-11-17T09:35:29/tasks/get_videos'.format(dag_id=dag_id)
-    response = requests.get(url, headers=headers)
-    print('type response: ', type(response.content))
-    p = response.content.decode('utf8')
-    o = json.loads(p)
-    print(o)
-
-
-def get_queue():
-    # returns which DAGs are currently running and which are scheduled to run
-    pass
+    # response = requests.get(url, headers=headers)
+    # j = json.loads(response.content.decode('utf8'))
+    # print(j)
+    # print('\n')
+    # gives info about specific tasks, state, start/end-date
+    # url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/2020-11-23T20:54:24/tasks/push_config_to_xcom'.format(dag_id=dag_id)
+    # response = requests.get(url, headers=headers)
+    # j = json.loads(response.content.decode('utf8'))
+    # print(j, '\n')
+    # url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/2020-11-23T20:54:24/tasks/get_video'.format(dag_id=dag_id)
+    # response = requests.get(url, headers=headers)
+    # j = json.loads(response.content.decode('utf8'))
+    # print(j, '\n')
+    # url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/2020-11-23T20:54:24/tasks/{taskid}'.format(dag_id=dag_id, taskid=taskid)
+    # response = requests.get(url, headers=headers)
+    # j = json.loads(response.content.decode('utf8'))
+    # print(j, '\n')
+    # just returns the state
+    # url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/2020-11-23T20:54:24'.format(dag_id=dag_id)   # info
+    # response = requests.get(url, headers=headers)
+    # j = json.loads(response.content.decode('utf8'))
+    # print('dag_runs')
+    # print(j)
+    # print('\n')
 
 
 def pause_dag(dag_id, headers):
 
-    url = 'http://localhost:8080/api/experimental/dags/{dag_id}/paused/true'.format(dag_id=dag_id)
-    response = requests.post(url, headers=headers)
-    print('paused: ', response.content)
+    # returns whether a dag is paused
+    url = 'http://localhost:8080/api/experimental/dags/{dag_id}/paused'.format(dag_id=dag_id)   # info
+    response = requests.get(url, headers=headers)
+    j = json.loads(response.content.decode('utf8'))
+    print('dag_runs')
+    print(j)
+    print('\n')
+    # pauses a dag, paused dags still accept triggers but won't exceute them until unpaused, while paused the dag state is freezed
+    url = 'http://localhost:8080/api/experimental/dags/{dag_id}/paused/true'.format(dag_id=dag_id)   # info
+    response = requests.get(url, headers=headers)
+    j = json.loads(response.content.decode('utf8'))
+    print('dag_runs')
+    print(j)
+    print('\n')
 
 
 if __name__ == '__main__':
