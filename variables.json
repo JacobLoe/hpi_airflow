@@ -1,0 +1,17 @@
+{
+    "volumes_data_path":  "airflow_cache:/data",
+    "extractor_file_extension": ".jpeg",
+    "shotdetection_sensitivity": "60",
+    "shotdetection_force_run": "False",
+    "image_extraction_trim_frames": "yes",
+    "image_extraction_frame_width": "299",
+    "image_extraction_force_run": "False",
+    "feature_extraction_force_run": "False",
+    "aspect_ratio_extraction_force_run": "False",
+    "optical_flow_frame_width": "129",
+    "optical_flow_step_size": "300",
+    "optical_flow_window_size": "300",
+    "optical_flow_top_percentile": "5",
+    "optical_flow_force_run": "False",
+    "get_videos_force_run": "False"
+}
