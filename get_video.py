@@ -14,7 +14,7 @@ def get_video(**context):
 
     data_root = os.path.split(context['ti'].xcom_pull(key='volumes_data_path', dag_id=dag_id))
     print('volumes_data_path: ', data_root)
-    data_root = data_root[0][:-1]
+    data_root = os.path.join('/', data_root[1])
     print('data_root: ', data_root)
 
     # get the videoid given with trigger from the config

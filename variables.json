@@ -1,5 +1,5 @@
 {
-    "volumes_data_path":  "/data:/data",
+    "volumes_data_path":  "airflow_cache:/data",
     "extractor_file_extension": ".jpeg",
     "shotdetection_sensitivity": "60",
     "shotdetection_force_run": "False",

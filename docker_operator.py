@@ -18,6 +18,9 @@
 # under the License.
 """
 Implements Docker operator
+Jacob Löbkens
+copied from airflow==1.10.12
+added "volumes" to template_fields
 """
 
 import ast
