@@ -1,6 +1,7 @@
 import requests
 import json
 import argparse
+import logging
 
 
 def trigger_dag(dag_id, videoid, dag_configuration, run_id):
@@ -22,7 +23,7 @@ def trigger_dag(dag_id, videoid, dag_configuration, run_id):
 
     # insert the run_id into the data for the DAG
     if run_id:
-        dag_data = '{' + data[1:-1] + ', "run_id":"{run_id}"'.format(run_id=run_id) + '}'
+        dag_data = '{' + dag_data[1:-1] + ', "run_id":"{run_id}"'.format(run_id=run_id) + '}'
 
     url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs'.format(dag_id=dag_id)
     response = requests.post(url, headers=headers, data=dag_data)
@@ -34,7 +35,7 @@ def trigger_dag(dag_id, videoid, dag_configuration, run_id):
         print('response.headers: ', response.headers)
 
 
-def get_dag_info(dag_id, run_id):
+def get_dag_info(dag_id, run_id, last_n):
     # returns what graphs run at the moment and potential errors
     # info about all dag runs: dag_ids, execution_dates, state (running, failed, completed)
     # either for only the dag specified by the run_id or all dags that have run
@@ -53,26 +54,22 @@ def get_dag_info(dag_id, run_id):
         print('response.text: ', response.text)
         print('response.headers: ', response.headers)
 
-    j = json.loads(response.content.decode('utf8'))
+    data = json.loads(response.content.decode('utf8'))
+    # return the last n dag runs
+    if last_n:
+        data = data[-last_n:]
+        return data
     # return a specific DAG run
-    if run_id:
-        for k in j:
+    elif run_id:
+        for k in data:
             if k['run_id'] == run_id:
-                print(k)
                 return k
     # return all DAG runs
     else:
-        for k in j:
-            print(k, '\n')
-
-    # # just gives same info (excluding the state) about the latest run and less than the first command, really useless
-    # url = 'http://localhost:8080/api/experimental/latest_runs'
-    # response = requests.get(url, headers=headers)
-    # j = json.loads(response.content.decode('utf8'))
-    # print(j)
+        return data
 
 
-def get_task_info(dag_id, task_id, run_id):
+def get_task_info(dag_id, task_id, run_id, last_n):
     # gives info about specific tasks, state, start/end-date for a specific run_id
 
     headers = {
@@ -80,21 +77,42 @@ def get_task_info(dag_id, task_id, run_id):
         'Content-Type': 'application/json',
     }
 
-    # use the run_id to get the timestamp at which the dag was started, from which the task ran,
-    if not run_id:
-        raise Exception('missing run_id')
-    timestamp = get_dag_info(dag_id, run_id)['execution_date'][:19]
+    if run_id and task_id and not last_n:
+        # return the timestamp for a specific run and task
 
-    url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/{timestamp}/tasks/{task_id}'.format(dag_id=dag_id, timestamp=timestamp, task_id=task_id)
-    response = requests.get(url, headers=headers)
-    # check whether the request was successful
-    if response.status_code != int(200):
-        print('response.status_code:', response.status_code)
-        print('response.text: ', response.text)
-        print('rsponse.headers: ', response.headers)
+        # FIXME don't slice the list to get the timestamp
+        timestamp = get_dag_info(dag_id, run_id, last_n)['execution_date'][:19]
+    elif last_n and not task_id and not run_id:
+        # return the last n tasks, regardless of the task and run id
+        # needs to know which tasks are in a given dag
 
-    j = json.loads(response.content.decode('utf8'))
-    print('\ntask_info\n', j)
+        # FIXME don't slice the list to get the timestamp
+        timestamp = get_dag_info(dag_id, run_id, last_n)
+        timestamp = [t['execution_date'][:19] for t in timestamp]
+    elif last_n and task_id and not run_id:
+        # return the last n task_id tasks, regardless of the run_id
+
+        # FIXME don't slice the list to get the timestamp
+        timestamp = get_dag_info(dag_id, run_id, last_n)
+        timestamp = [t['execution_date'][:19] for t in timestamp]
+
+    elif last_n and not task_id and run_id:
+        # return the last_n tasks of the run_id dag
+        pass
+    else:
+        raise Exception('Something went wrong with the parameters')
+
+    for ts in timestamp:
+        url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/{timestamp}/tasks/{task_id}'.format(dag_id=dag_id, timestamp=ts, task_id=task_id)
+        response = requests.get(url, headers=headers)
+        # check whether the request was successful
+        if response.status_code != int(200):
+            print('response.status_code:', response.status_code)
+            print('response.text: ', response.text)
+            print('rsponse.headers: ', response.headers)
+
+        data = json.loads(response.content.decode('utf8'))
+        print(data, '\n')
 
 
 def pause_dag(dag_id):
@@ -141,16 +159,18 @@ def pause_dag(dag_id):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('action',choices=('trigger', 'get_dag_info', 'get_task_info') ,help='decide the action that is send to the server')
+    parser.add_argument('action', choices=('trigger', 'get_dag_info', 'get_task_info'), help='decide the action that is send to the server')
     parser.add_argument('dag_id', help='defines which DAG is targeted')
     parser.add_argument('--videoid', help='which video is supposed to be processed ,not functional, atm hardcoded to 6ffaf51')
     parser.add_argument('--task_id', help='specifies which task is looked at for info')
     parser.add_argument('--run_id', help='set the id of a dag run, has to be unique, if this is not used airflow uses an id with the format "manual__YYYY-mm-DDTHH:MM:SS"')
+    parser.add_argument('--last_n', type=int, default=5, help='')
     args = parser.parse_args()
 
     dag_id = args.dag_id
     task_id = args.task_id
     run_id = args.run_id
+    last_n = args.last_n
 
     # FIXME hardcoded id just for testing
     videoid = args.videoid
@@ -162,9 +182,10 @@ if __name__ == '__main__':
             params = {key: data[key] for key in data}
         trigger_dag(dag_id, videoid, params, run_id)
     elif args.action == 'get_dag_info':
-        get_dag_info(dag_id, run_id)
+        for d in get_dag_info(dag_id, run_id, last_n):
+            print(d, '\n')
     elif args.action == 'get_task_info':
-        get_task_info(dag_id, task_id, run_id)
+        get_task_info(dag_id, task_id, run_id, last_n)
     else:
         raise Exception('action "{action}" could not be interpreted'.format(action=args.action))
 
