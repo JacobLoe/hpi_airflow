@@ -77,26 +77,31 @@ def get_task_info(dag_id, task_id, run_id, last_n):
         'Content-Type': 'application/json',
     }
 
-    if run_id and task_id and not last_n:
-        # return the timestamp for a specific run and task
+    if not dag_id and last_n and task_id and not run_id:
+        # return the last n tasks
+        timestamp = get_dag_info(dag_id, run_id, last_n)
+        timestamp = [t['execution_date'][:19] for t in timestamp]
+        pass
+    elif dag_id and run_id and task_id and not last_n:
+        # return the timestamp for a specific dag-run and specific task
 
         # FIXME don't slice the list to get the timestamp
         timestamp = get_dag_info(dag_id, run_id, last_n)['execution_date'][:19]
-    elif last_n and not task_id and not run_id:
-        # return the last n tasks, regardless of the task and run id
+    elif dag_id and last_n and not task_id and not run_id:
+        # return the last n tasks for a dag-run , regardless of the task and run id
         # needs to know which tasks are in a given dag
 
         # FIXME don't slice the list to get the timestamp
         timestamp = get_dag_info(dag_id, run_id, last_n)
         timestamp = [t['execution_date'][:19] for t in timestamp]
-    elif last_n and task_id and not run_id:
+    elif dag_id and last_n and task_id and not run_id:
         # return the last n task_id tasks, regardless of the run_id
 
         # FIXME don't slice the list to get the timestamp
         timestamp = get_dag_info(dag_id, run_id, last_n)
         timestamp = [t['execution_date'][:19] for t in timestamp]
 
-    elif last_n and not task_id and run_id:
+    elif dag_id and last_n and run_id and not task_id :
         # return the last_n tasks of the run_id dag
         pass
     else:
@@ -160,7 +165,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('action', choices=('trigger', 'get_dag_info', 'get_task_info'), help='decide the action that is send to the server')
-    parser.add_argument('dag_id', help='defines which DAG is targeted')
+    parser.add_argument('--dag_id', help='defines which DAG is targeted')
     parser.add_argument('--videoid', help='which video is supposed to be processed ,not functional, atm hardcoded to 6ffaf51')
     parser.add_argument('--task_id', help='specifies which task is looked at for info')
     parser.add_argument('--run_id', help='set the id of a dag run, has to be unique, if this is not used airflow uses an id with the format "manual__YYYY-mm-DDTHH:MM:SS"')
@@ -171,6 +176,9 @@ if __name__ == '__main__':
     task_id = args.task_id
     run_id = args.run_id
     last_n = args.last_n
+
+    if not dag_id:
+        task_id = ['push_config_to_xcom', 'get_video', 'shotdetection']
 
     # FIXME hardcoded id just for testing
     videoid = args.videoid

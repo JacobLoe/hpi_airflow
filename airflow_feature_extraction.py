@@ -16,13 +16,12 @@ default_args = {
 }
 
 
-def push_initial_parameters(**context):
+def push_config_to_xcom(**context):
     # gets all relevant extractor parameters from the dag configuration and and pushes them to xcom
     # this function should only be called once
 
-    volumes_video_path = context['dag_run'].conf['volumes_video_path']
-    volumes_features_path = context['dag_run'].conf['volumes_features_path']
-    volumes_file_mappings_path = context['dag_run'].conf['volumes_file_mappings_path']
+    videoid = context['dag_run'].conf['videoid']
+    volumes_data_path = context['dag_run'].conf['volumes_data_path']
     extractor_file_extension = context['dag_run'].conf['extractor_file_extension']
 
     shotdetection_sensitivity = context['dag_run'].conf['shotdetection_sensitivity']
@@ -35,9 +34,8 @@ def push_initial_parameters(**context):
     feature_extraction_force_run = context['dag_run'].conf['feature_extraction_force_run']
 
     # xcoms are automatically mapped to the task_id and dag_id in which the created to prevent an incorrect pull
-    context['ti'].xcom_push(key='volumes_video_path', value=volumes_video_path)
-    context['ti'].xcom_push(key='volumes_features_path', value=volumes_features_path)
-    context['ti'].xcom_push(key='volumes_file_mappings_path', value=volumes_file_mappings_path)
+    context['ti'].xcom_push(key='videoid', value=videoid)
+    context['ti'].xcom_push(key='volumes_data_path', value=volumes_data_path)
     context['ti'].xcom_push(key='extractor_file_extension', value=extractor_file_extension)
 
     context['ti'].xcom_push(key='shotdetection_sensitivity', value=shotdetection_sensitivity)
@@ -55,50 +53,46 @@ with DAG(DAG_ID, default_args=default_args,
          max_active_runs=1,  # prevents more than one graph from running at a time
          concurrency=1) as dag:
 
-    get_params = PythonOperator(
-        task_id='push_params',
-        python_callable=push_initial_parameters
+    task_push_config_to_xcom = PythonOperator(
+        task_id='push_config_to_xcom',
+        python_callable=push_config_to_xcom
     )
 
-    init_video = PythonOperator(
-        task_id='get_videos',
+    task_get_video = PythonOperator(
+        task_id='get_video',
         python_callable=get_video
     )
 
-    shot_detection = (DockerOperator(
-        task_id='shotdetection_task',
-        image='jacobloe/shot_detection:0.5',
-        command='/video /data/ /file_mappings.tsv {{ti.xcom_pull(key="videoid", dag_id='+DAG_ID+')}}'
+    task_shotdetection = (DockerOperator(
+        task_id='shotdetection',
+        image='jacobloe/shot_detection:0.7',
+        command='/data {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --sensitivity {{ti.xcom_pull(key="shotdetection_sensitivity", dag_id='+DAG_ID+')}}'
                 ' --force_run {{ti.xcom_pull(key="shotdetection_force_run", dag_id='+DAG_ID+')}}',
-        volumes=['{{ti.xcom_pull(key="volumes_video_path", dag_id='+DAG_ID+')}}',
-                 '{{ti.xcom_pull(key="volumes_features_path", dag_id='+DAG_ID+')}}',
-                 '{{ti.xcom_pull(key="volumes_file_mappings_path", dag_id='+DAG_ID+')}}'],
+        volumes=['{{ti.xcom_pull(key="volumes_data_path", dag_id='+DAG_ID+')}}'],
         xcom_all=True,
     ))
-    image_extraction = (DockerOperator(
+
+    task_imageextraction = (DockerOperator(
         task_id='image_extraction',
-        image='jacobloe/extract_images:0.5',
-        command='/video/ /data/ /file_mappings.tsv {{ti.xcom_pull(key="videoid", dag_id='+DAG_ID+')}}'
+        image='jacobloe/extract_images:0.7',
+        command='/data/ {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --trim_frames {{ti.xcom_pull(key="image_extraction_trim_frames", dag_id='+DAG_ID+')}}'
                 ' --frame_width {{ti.xcom_pull(key="image_extraction_frame_width", dag_id='+DAG_ID+')}}'
                 ' --file_extension {{ti.xcom_pull(key="extractor_file_extension", dag_id='+DAG_ID+')}}'
                 ' --force_run {{ti.xcom_pull(key="image_extraction_force_run", dag_id='+DAG_ID+')}}',
-        volumes=['{{ti.xcom_pull(key="volumes_video_path", dag_id='+DAG_ID+')}}',
-                 '{{ti.xcom_pull(key="volumes_features_path", dag_id='+DAG_ID+')}}',
-                 '{{ti.xcom_pull(key="volumes_file_mappings_path", dag_id='+DAG_ID+')}}'],
+        volumes=['{{ti.xcom_pull(key="volumes_data_path", dag_id='+DAG_ID+')}}'],
         xcom_all=True,
     ))
-    feature_extraction = (DockerOperator(
+
+    task_featureextraction = (DockerOperator(
         task_id='feature_extraction',
-        image='jacobloe/extract_features:0.5',
-        command='/data/ /file_mappings.tsv {{ti.xcom_pull(key="videoid", dag_id='+DAG_ID+')}}'
+        image='jacobloe/extract_features:0.7',
+        command='/data/ {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --file_extension {{ti.xcom_pull(key="extractor_file_extension", dag_id='+DAG_ID+')}}'
                 ' --force_run {{ti.xcom_pull(key="feature_extraction_force_run", dag_id='+DAG_ID+')}}',
-        volumes=['{{ti.xcom_pull(key="volumes_video_path", dag_id='+DAG_ID+')}}',
-                 '{{ti.xcom_pull(key="volumes_features_path", dag_id='+DAG_ID+')}}',
-                 '{{ti.xcom_pull(key="volumes_file_mappings_path", dag_id='+DAG_ID+')}}',
+        volumes=['{{ti.xcom_pull(key="volumes_data_path", dag_id='+DAG_ID+')}}',
                  '/home/.keras/:/root/.keras'],
         xcom_all=True,
     ))
-    get_params >> init_video >> shot_detection >> image_extraction >> feature_extraction
+    task_push_config_to_xcom >> task_get_video >> task_shotdetection >> task_imageextraction >> task_featureextraction

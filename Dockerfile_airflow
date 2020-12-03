@@ -1,3 +1,4 @@
+# docker rmi jacobloe/airflow:0.1
 # docker build -f Dockerfile_airflow -t jacobloe/airflow:0.1 .
 # docker run --rm -it -v airflow_cache:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --name airflow jacobloe/airflow:0.1
 # --entrypoint /bin/bash
@@ -44,6 +45,7 @@ RUN mkdir /root/airflow/dags
 
 # dag scripts
 COPY airflow_shotdetection.py /root/airflow/dags
+COPY airflow_feature_extraction.py /root/airflow/dags
 # FIXME copy remaining dag scripts
 
 # copy the scripts that are used by all dags for tasks
