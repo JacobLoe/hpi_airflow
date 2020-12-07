@@ -2,9 +2,7 @@ import requests
 import json
 import argparse
 import logging
-import time
 from dateutil import parser
-import datetime
 
 
 def trigger_dag(dag_id, videoid, dag_configuration, run_id):
@@ -145,6 +143,28 @@ def get_task_info(dag_id, task_id, run_id, last_n):
     #     print(data, '\n')
 
 
+def get_dag_state(dag_id, run_id):
+    # returns the state of a dag, either with a run_id or the last dag that was started
+    headers = {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'application/json',
+    }
+
+    if run_id:
+        return get_dag_info(dag_id, run_id, None)['state']
+    else:
+        dags = get_dag_info(dag_id, None, None)
+
+        states = []
+        for d in dags:
+            sdt = parser.parse(d['start_date'])
+            p = {'state': d['state'], 'start_datetime': sdt}
+            states.append(p)
+
+        state = sorted(states, key=lambda k: k["start_datetime"], reverse=True)[0]
+        return state['state']
+
+
 def pause_dag(dag_id):
 
     headers = {
@@ -189,7 +209,7 @@ def pause_dag(dag_id):
 if __name__ == '__main__':
 
     args_parser = argparse.ArgumentParser()
-    args_parser.add_argument('action', choices=('trigger', 'get_dag_info', 'get_task_info'), help='decide the action that is send to the server')
+    args_parser.add_argument('action', choices=('trigger', 'get_dag_info', 'get_task_info', 'get_dag_state'), help='decide the action that is send to the server')
     args_parser.add_argument('--dag_id', help='defines which DAG is targeted')
     args_parser.add_argument('--videoid', help='which video is supposed to be processed ,not functional, atm hardcoded to 6ffaf51')
     args_parser.add_argument('--task_id', help='specifies which task is looked at for info')
@@ -217,12 +237,18 @@ if __name__ == '__main__':
             data = json.load(j)
             params = {key: data[key] for key in data}
         trigger_dag(dag_id, videoid, params, run_id)
+
     elif args.action == 'get_dag_info':
         for d in get_dag_info(dag_id, run_id, last_n):
             print(d, '\n')
+
     elif args.action == 'get_task_info':
         for d in get_task_info(dag_id, task_id, run_id, last_n):
             print(d, '\n')
+
+    elif args.action == 'get_dag_state':
+        print(get_dag_state(dag_id, run_id))
+
     else:
         raise Exception('action "{action}" could not be interpreted'.format(action=args.action))
 
