@@ -2,6 +2,9 @@ import requests
 import json
 import argparse
 import logging
+import time
+from dateutil import parser
+import datetime
 
 
 def trigger_dag(dag_id, videoid, dag_configuration, run_id):
@@ -77,47 +80,69 @@ def get_task_info(dag_id, task_id, run_id, last_n):
         'Content-Type': 'application/json',
     }
 
-    if not dag_id and last_n and task_id and not run_id:
+    if len(dag_id) > 1 and last_n and task_id and not run_id:
         # return the last n tasks
-        timestamp = get_dag_info(dag_id, run_id, last_n)
-        timestamp = [t['execution_date'][:19] for t in timestamp]
-        pass
-    elif dag_id and run_id and task_id and not last_n:
-        # return the timestamp for a specific dag-run and specific task
+        # needs a list of all dag_ids and a list of all the tasks
+        # then it runs get_task_info for each dag_id
 
-        # FIXME don't slice the list to get the timestamp
-        timestamp = get_dag_info(dag_id, run_id, last_n)['execution_date'][:19]
-    elif dag_id and last_n and not task_id and not run_id:
-        # return the last n tasks for a dag-run , regardless of the task and run id
-        # needs to know which tasks are in a given dag
+        tasks = []
+        for i, d in enumerate(dag_id):
+            dags = get_dag_info(d, None, None)
+            for j in dags:
+                # ts.append([j['dag_id'], j['execution_date']])
+                ed = j['execution_date']
+                for t in task_id[i]:
+                    url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/{timestamp}/tasks/{task_id}'.format(dag_id=d, timestamp=ed, task_id=t)
+                    response = requests.get(url, headers=headers)
+                    r = json.loads(response.content.decode('utf8'))
+                    try:
+                        # convert the start_date to datetime object, to make it sortable
+                        start_datetime = parser.parse(r['start_date'])
+                        # add the converted time to the task dict instead of overwriting it
+                        r['start_datetime'] = start_datetime
+                        tasks.append(r)
+                    except:
+                        pass
 
-        # FIXME don't slice the list to get the timestamp
-        timestamp = get_dag_info(dag_id, run_id, last_n)
-        timestamp = [t['execution_date'][:19] for t in timestamp]
-    elif dag_id and last_n and task_id and not run_id:
-        # return the last n task_id tasks, regardless of the run_id
+        # sort the tasks by start_time and take last_n tasks that were started
+        tasks = sorted(tasks, key=lambda k: k["start_datetime"], reverse=True)[:last_n]
+        return tasks
 
-        # FIXME don't slice the list to get the timestamp
-        timestamp = get_dag_info(dag_id, run_id, last_n)
-        timestamp = [t['execution_date'][:19] for t in timestamp]
-
-    elif dag_id and last_n and run_id and not task_id :
-        # return the last_n tasks of the run_id dag
-        pass
-    else:
-        raise Exception('Something went wrong with the parameters')
-
-    for ts in timestamp:
-        url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/{timestamp}/tasks/{task_id}'.format(dag_id=dag_id, timestamp=ts, task_id=task_id)
-        response = requests.get(url, headers=headers)
-        # check whether the request was successful
-        if response.status_code != int(200):
-            print('response.status_code:', response.status_code)
-            print('response.text: ', response.text)
-            print('rsponse.headers: ', response.headers)
-
-        data = json.loads(response.content.decode('utf8'))
-        print(data, '\n')
+    # elif dag_id and run_id and task_id and not last_n:
+    #     # return the timestamp for a specific dag-run and specific task
+    #
+    #     # FIXME don't slice the list to get the timestamp
+    #     timestamp = get_dag_info(dag_id, run_id, last_n)['execution_date'][:19]
+    # elif dag_id and last_n and not task_id and not run_id:
+    #     # return the last n tasks for a dag-run , regardless of the task and run id
+    #     # needs to know which tasks are in a given dag
+    #
+    #     # FIXME don't slice the list to get the timestamp
+    #     timestamp = get_dag_info(dag_id, run_id, last_n)
+    #     timestamp = [t['execution_date'][:19] for t in timestamp]
+    # elif dag_id and last_n and task_id and not run_id:
+    #     # return the last n task_id tasks, regardless of the run_id
+    #
+    #     # FIXME don't slice the list to get the timestamp
+    #     timestamp = get_dag_info(dag_id, run_id, last_n)
+    #     timestamp = [t['execution_date'][:19] for t in timestamp]
+    # elif dag_id and last_n and run_id and not task_id:
+    #     # return the last_n tasks of the run_id dag
+    #     pass
+    # else:
+    #     raise Exception('Something went wrong with the parameters')
+    #
+    # for ts in timestamp:
+    #     url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/{timestamp}/tasks/{task_id}'.format(dag_id=dag_id, timestamp=ts, task_id=task_id)
+    #     response = requests.get(url, headers=headers)
+    #     # check whether the request was successful
+    #     if response.status_code != int(200):
+    #         print('response.status_code:', response.status_code)
+    #         print('response.text: ', response.text)
+    #         print('rsponse.headers: ', response.headers)
+    #
+    #     data = json.loads(response.content.decode('utf8'))
+    #     print(data, '\n')
 
 
 def pause_dag(dag_id):
@@ -163,14 +188,14 @@ def pause_dag(dag_id):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('action', choices=('trigger', 'get_dag_info', 'get_task_info'), help='decide the action that is send to the server')
-    parser.add_argument('--dag_id', help='defines which DAG is targeted')
-    parser.add_argument('--videoid', help='which video is supposed to be processed ,not functional, atm hardcoded to 6ffaf51')
-    parser.add_argument('--task_id', help='specifies which task is looked at for info')
-    parser.add_argument('--run_id', help='set the id of a dag run, has to be unique, if this is not used airflow uses an id with the format "manual__YYYY-mm-DDTHH:MM:SS"')
-    parser.add_argument('--last_n', type=int, default=5, help='')
-    args = parser.parse_args()
+    args_parser = argparse.ArgumentParser()
+    args_parser.add_argument('action', choices=('trigger', 'get_dag_info', 'get_task_info'), help='decide the action that is send to the server')
+    args_parser.add_argument('--dag_id', help='defines which DAG is targeted')
+    args_parser.add_argument('--videoid', help='which video is supposed to be processed ,not functional, atm hardcoded to 6ffaf51')
+    args_parser.add_argument('--task_id', help='specifies which task is looked at for info')
+    args_parser.add_argument('--run_id', help='set the id of a dag run, has to be unique, if this is not used airflow uses an id with the format "manual__YYYY-mm-DDTHH:MM:SS"')
+    args_parser.add_argument('--last_n', type=int, default=5, help='')
+    args = args_parser.parse_args()
 
     dag_id = args.dag_id
     task_id = args.task_id
@@ -178,7 +203,10 @@ if __name__ == '__main__':
     last_n = args.last_n
 
     if not dag_id:
-        task_id = ['push_config_to_xcom', 'get_video', 'shotdetection']
+        dag_id = ['shotdetection', 'feature_extraction']
+        task_id_sd = ['push_config_to_xcom', 'get_video', 'shotdetection']
+        task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
+        task_id = [task_id_sd, task_id_fe]
 
     # FIXME hardcoded id just for testing
     videoid = args.videoid
@@ -193,7 +221,8 @@ if __name__ == '__main__':
         for d in get_dag_info(dag_id, run_id, last_n):
             print(d, '\n')
     elif args.action == 'get_task_info':
-        get_task_info(dag_id, task_id, run_id, last_n)
+        for d in get_task_info(dag_id, task_id, run_id, last_n):
+            print(d, '\n')
     else:
         raise Exception('action "{action}" could not be interpreted'.format(action=args.action))
 
