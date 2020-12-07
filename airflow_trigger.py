@@ -4,6 +4,15 @@ import argparse
 import logging
 from dateutil import parser
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
+
+ch = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+logger.propagate = False    # prevent log messages from appearing twice
+
 
 def trigger_dag(dag_id, videoid, dag_configuration, run_id):
     # triggers the DAG dag_id with the given dag_configuration_json
@@ -13,7 +22,7 @@ def trigger_dag(dag_id, videoid, dag_configuration, run_id):
         'Content-Type': 'application/json',
     }
 
-    print('Starting DAG "{dag_id}" for id "{videoid}"'.format(dag_id=dag_id, videoid=videoid))
+    logger.info('Starting DAG "{dag_id}" for id "{videoid}"'.format(dag_id=dag_id, videoid=videoid))
     # add the dag_id and the videoid to the dag_configuration_json
     dag_configuration['dag_id'] = dag_id
     dag_configuration['videoid'] = str(videoid)
@@ -31,9 +40,9 @@ def trigger_dag(dag_id, videoid, dag_configuration, run_id):
 
     # check whether the request was successful
     if response.status_code != int(200):
-        print('response.status_code:', response.status_code)
-        print('response.text: ', response.text)
-        print('response.headers: ', response.headers)
+        logger.info('response.status_code:', response.status_code)
+        logger.info('response.text: ', response.text)
+        logger.info('response.headers: ', response.headers)
 
 
 def get_dag_info(dag_id, run_id, last_n):
@@ -51,9 +60,9 @@ def get_dag_info(dag_id, run_id, last_n):
 
     # check whether the request was successful
     if response.status_code != int(200):
-        print('response.status_code:', response.status_code)
-        print('response.text: ', response.text)
-        print('response.headers: ', response.headers)
+        logger.info('response.status_code:', response.status_code)
+        logger.info('response.text: ', response.text)
+        logger.info('response.headers: ', response.headers)
 
     data = json.loads(response.content.decode('utf8'))
     # return the last n dag runs
@@ -110,7 +119,6 @@ def get_task_info(dag_id, task_id, run_id, last_n):
         return tasks
 
     elif dag_id and run_id and task_id and not last_n:
-        print('etst')
         # return info for a specific task
         # FIXME maybe don't slice the list to get the correct timestamp
         timestamp = [get_dag_info(dag_id, run_id, last_n)['execution_date'][:19]]
@@ -209,9 +217,9 @@ def get_task_info(dag_id, task_id, run_id, last_n):
         response = requests.get(url, headers=headers)
         # check whether the request was successful
         if response.status_code != int(200):
-            print('response.status_code:', response.status_code)
-            print('response.text: ', response.text)
-            print('rsponse.headers: ', response.headers)
+            logger.info('response.status_code:', response.status_code)
+            logger.info('response.text: ', response.text)
+            logger.info('response.headers: ', response.headers)
 
         data.append(json.loads(response.content.decode('utf8')))
 
@@ -238,47 +246,6 @@ def get_dag_state(dag_id, run_id):
 
         state = sorted(states, key=lambda k: k["start_datetime"], reverse=True)[0]
         return state['state']
-
-
-def pause_dag(dag_id):
-
-    headers = {
-        'Cache-Control': 'no-cache',
-        'Content-Type': 'application/json',
-    }
-
-    # returns whether a dag is paused
-    url = 'http://localhost:8080/api/experimental/dags/{dag_id}/paused'.format(dag_id=dag_id)   # info
-    response = requests.get(url, headers=headers)
-    j = json.loads(response.content.decode('utf8'))
-    print('dag_runs')
-    print(j)
-    print('\n')
-    # pauses a dag, paused dags still accept triggers but won't exceute them until unpaused, while paused the dag state is freezed
-    url = 'http://localhost:8080/api/experimental/dags/{dag_id}/paused/true'.format(dag_id=dag_id)   # info
-    response = requests.get(url, headers=headers)
-    j = json.loads(response.content.decode('utf8'))
-    print('dag_runs')
-    print(j)
-    print('\n')
-
-    # # just returns the state of a dag at a specific timestamp
-    # url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/2020-11-30T20:45:01'.format(dag_id=dag_id)   # info
-    # response = requests.get(url, headers=headers)
-    # j = json.loads(response.content.decode('utf8'))
-    # print('dag_runs')
-    # print(j)
-    # print('\n')
-
-    # # info about a specific task, task parameters, kinda useless
-    # # can return the command that was used for starting a container, but no the specific values
-    # # for example returns: --sensitivity {{ti.xcom_pull(key="shotdetection_sensitivity", dag_id='+DAG_ID+')}
-    # # instead of --sensitivity 60
-    # url = 'http://localhost:8080/api/experimental/dags/{dag_id}/tasks/{taskid}'.format(dag_id=dag_id, taskid=taskid)
-    # response = requests.get(url, headers=headers)
-    # j = json.loads(response.content.decode('utf8'))
-    # print(j)
-    # print('\n')
 
 
 if __name__ == '__main__':
