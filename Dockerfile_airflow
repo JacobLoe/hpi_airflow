@@ -1,12 +1,11 @@
 # docker rmi jacobloe/airflow:0.1
 # docker build -f Dockerfile_airflow -t jacobloe/airflow:0.1 .
+# docker volume create --driver local --opt type=none --opt device=/home/jacob/Downloads/hpi/static/data --opt o=bind airflow_cache
 # docker run --rm -it -v airflow_cache:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --name airflow jacobloe/airflow:0.1
 # --entrypoint /bin/bash
 # airflow scheduler & airflow webserver -p 8080
-# docker volume create --driver local --opt type=none --opt device=/home/jacob/Downloads/hpi/static/data --opt o=bind airflow_cache
 
 # docker run --rm -it -v airflow_cache:/data --entrypoint /bin/bash jacobloe/shot_detection:0.7
-#FROM python:3.8.3
 FROM python:3.8-slim-buster
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -18,14 +17,6 @@ RUN pip3 install --trusted-host pypi.python.org apache-airflow==1.10.12 --constr
 # is needed for docker_operator.py
 RUN pip3 install docker==4.3.1
 
-#RUN apt-get update
-#RUN apt-get -y install apt-transport-https ca-certificates curl gnupg2 software-properties-common
-#RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
-#RUN add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
-
-#RUN apt-get update
-#RUN apt-get -y install docker-ce-cli
-
 # initialise the database for airflow
 # this also creates the airflow folder with the configuration in root
 RUN airflow initdb
@@ -36,6 +27,8 @@ RUN sed -i '/load_examples = True/c load_examples = False' /root/airflow/airflow
 RUN sed -i '/dags_are_paused_at_creation = True/c dags_are_paused_at_creation = False' /root/airflow/airflow.cfg
 # FIXME this done temporarily to allow all connections to the server, ideally this would be changed to work with username/password
 RUN sed -i '/auth_backend = airflow.api.auth.backend.deny_all/c auth_backend = airflow.api.auth.backend.default' /root/airflow/airflow.cfg
+# save the airflow logs in the docker volume, the 's# #c #' is needed for the command to affect the path
+RUN sed -i 's#base_log_folder = /root/airflow/logs#c base_log_folder = /data/airflow/logs#' /root/airflow/airflow.cfg
 
 # create the folder in which airflow is lokking for dags
 RUN mkdir /root/airflow/dags
