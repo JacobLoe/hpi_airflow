@@ -5,7 +5,7 @@ import logging
 from dateutil import parser
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 ch = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -48,7 +48,7 @@ def trigger_dag(dag_id, videoid, dag_configuration, run_id):
 
 
 def get_dag_info(dag_id, run_id, last_n):
-    # returns what graphs run at the moment and potential errors
+    # returns what graphs run at the moment
     # info about all dag runs: dag_ids, execution_dates, state (running, failed, completed)
     # either for only the dag specified by the run_id or all dags that have run
 
@@ -57,30 +57,78 @@ def get_dag_info(dag_id, run_id, last_n):
         'Content-Type': 'application/json',
     }
 
-    url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs'.format(dag_id=dag_id)   # info
-    response = requests.get(url, headers=headers)
+    if last_n and type(dag_id) != list:
+        # return the last n runs, for a specific dag_id
+        url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs'.format(dag_id=dag_id)  # info
+        response = requests.get(url, headers=headers)
 
-    # check whether the request was successful
-    if response.status_code != int(200):
-        logger.info('response.status_code:', response.status_code)
-        logger.info('response.text: ', response.text)
-        logger.info('response.headers: ', response.headers)
+        # check whether the request was successful
+        if response.status_code != int(200):
+            logger.info('response.status_code:', response.status_code)
+            logger.info('response.text: ', response.text)
+            logger.info('response.headers: ', response.headers)
 
-    data = json.loads(response.content.decode('utf8'))
+        data = json.loads(response.content.decode('utf8'))
 
-    # return the last n dag runs
-    if last_n:
         data = data[-last_n:]
         return data
 
-    # return a specific DAG run, identified by its run_id
-    elif run_id:
+    elif run_id and type(dag_id) != list:
+        # return a specific DAG run, identfied by its run_id
+        url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs'.format(dag_id=dag_id)  # info
+        response = requests.get(url, headers=headers)
+
+        # check whether the request was successful
+        if response.status_code != int(200):
+            logger.info('response.status_code:', response.status_code)
+            logger.info('response.text: ', response.text)
+            logger.info('response.headers: ', response.headers)
+
+        data = json.loads(response.content.decode('utf8'))
+
         for k in data:
             if k['run_id'] == run_id:
                 return k
-    # return all DAG runs
-    else:
+    elif type(dag_id) != list:
+        # return all DAG runs for a specific dag_id
+        url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs'.format(dag_id=dag_id)  # info
+        response = requests.get(url, headers=headers)
+
+        # check whether the request was successful
+        if response.status_code != int(200):
+            logger.info('response.status_code:', response.status_code)
+            logger.info('response.text: ', response.text)
+            logger.info('response.headers: ', response.headers)
+
+        data = json.loads(response.content.decode('utf8'))
+
         return data
+    elif type(dag_id) == list and last_n:
+        # return info for all the dags regardless of dag_id, either all or the last n than have run
+        d = []
+        for di in dag_id:
+            info = get_dag_info(dag_id=di, run_id=None, last_n=last_n)
+            for i in info:
+                start_date = str(parser.parse(i['start_date']))
+                i['start_date'] = start_date
+                d.append(i)
+
+        # sort the dags by start_time and take the last_n dags that were started
+        dags = sorted(d, key=lambda k: k["start_date"], reverse=True)[:last_n]
+        return dags
+    elif type(dag_id) == list and not last_n:
+        d = []
+        for di in dag_id:
+            info = get_dag_info(dag_id=di, run_id=None, last_n=None)
+            for i in info:
+                # convert the start date to a sortable type
+                start_date = str(parser.parse(i['start_date']))
+                i['start_date'] = start_date
+                d.append(i)
+
+        # sort the dags by start_time and take the last_n dags that were started
+        dags = sorted(d, key=lambda k: k["start_date"], reverse=True)
+        return dags
 
 
 def get_task_info(dag_id, task_id, run_id, last_n):
@@ -150,7 +198,7 @@ def get_task_info(dag_id, task_id, run_id, last_n):
                     # or the previous task is not finished yet
                     break
 
-        # sort the tasks by start_time and take last_n tasks that were started
+        # sort the tasks by start_time and take the last_n tasks that were started
         tasks = sorted(tasks, key=lambda k: k["start_date"], reverse=True)[:last_n]
         return tasks
 
@@ -238,9 +286,12 @@ def get_dag_state(dag_id, run_id):
                 star_date = parser.parse(d['start_date'])
                 p = {'state': d['state'], 'start_date': star_date, 'dag_id':d['dag_id']}
                 states.append(p)
-                print(p)
         state = sorted(states, key=lambda k: k["start_date"], reverse=True)[0]
         return state['dag_id'], state['state']
+
+
+def get_dag_logs(dag_id, run_id):
+    pass
 
 
 if __name__ == '__main__':
