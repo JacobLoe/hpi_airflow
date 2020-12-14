@@ -4,6 +4,7 @@
 # docker run --rm -it -v airflow_cache:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --name airflow jacobloe/airflow:0.1
 # --entrypoint /bin/bash
 # airflow scheduler & airflow webserver -p 8080
+# apt update && apt install -y vim && vim airflow.cfg
 
 # docker run --rm -it -v airflow_cache:/data --entrypoint /bin/bash jacobloe/shot_detection:0.7
 FROM python:3.8-slim-buster
@@ -27,8 +28,8 @@ RUN sed -i '/load_examples = True/c load_examples = False' /root/airflow/airflow
 RUN sed -i '/dags_are_paused_at_creation = True/c dags_are_paused_at_creation = False' /root/airflow/airflow.cfg
 # FIXME this done temporarily to allow all connections to the server, ideally this would be changed to work with username/password
 RUN sed -i '/auth_backend = airflow.api.auth.backend.deny_all/c auth_backend = airflow.api.auth.backend.default' /root/airflow/airflow.cfg
-# save the airflow logs in the docker volume, the 's# #c #' is needed for the command to affect the path
-RUN sed -i 's#base_log_folder = /root/airflow/logs#c base_log_folder = /data/airflow/logs#' /root/airflow/airflow.cfg
+# save the airflow logs in the docker volume, the 's# # #' is needed for the command to affect the path
+RUN sed -i 's#base_log_folder = /root/airflow/logs#base_log_folder = /data/airflow/logs#' /root/airflow/airflow.cfg
 
 # create the folder in which airflow is lokking for dags
 RUN mkdir /root/airflow/dags
