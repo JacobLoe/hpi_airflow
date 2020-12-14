@@ -107,9 +107,8 @@ def get_task_info(dag_id, task_id, run_id, last_n):
                     r = json.loads(response.content.decode('utf8'))
                     try:
                         # convert the start_date to datetime object, to make it sortable
-                        start_datetime = str(parser.parse(r['start_date']))
-                        # add the converted time to the task dict instead of overwriting it
-                        r['start_date'] = start_datetime
+                        start_date = str(parser.parse(r['start_date']))
+                        r['start_date'] = start_date
                         tasks.append(r)
                     except:
                         # if the try block didn't work the the task was not started yet
@@ -118,7 +117,7 @@ def get_task_info(dag_id, task_id, run_id, last_n):
                         break
 
         # sort the tasks by start_time and take last_n tasks that were started
-        tasks = sorted(tasks, key=lambda k: k["start_datetime"], reverse=True)[:last_n]
+        tasks = sorted(tasks, key=lambda k: k["start_date"], reverse=True)[:last_n]
         return tasks
 
     elif dag_id and run_id and task_id and not last_n:
@@ -142,9 +141,8 @@ def get_task_info(dag_id, task_id, run_id, last_n):
                 r = json.loads(response.content.decode('utf8'))
                 try:
                     # convert the start_date to datetime object, to make it sortable
-                    start_datetime = str(parser.parse(r['start_date']))
-                    # add the converted time to the task dict instead of overwriting it
-                    r['start_datetime'] = start_datetime
+                    start_date = str(parser.parse(r['start_date']))
+                    r['start_date'] = start_date
                     tasks.append(r)
                 except:
                     # if the try block didn't work the the task was not started yet
@@ -153,7 +151,7 @@ def get_task_info(dag_id, task_id, run_id, last_n):
                     break
 
         # sort the tasks by start_time and take last_n tasks that were started
-        tasks = sorted(tasks, key=lambda k: k["start_datetime"], reverse=True)[:last_n]
+        tasks = sorted(tasks, key=lambda k: k["start_date"], reverse=True)[:last_n]
         return tasks
 
     elif dag_id and last_n and task_id and not run_id:
@@ -170,9 +168,8 @@ def get_task_info(dag_id, task_id, run_id, last_n):
             r = json.loads(response.content.decode('utf8'))
             try:
                 # convert the start_date to datetime object, to make it sortable
-                start_datetime = str(parser.parse(r['start_date']))
-                # add the converted time to the task dict instead of overwriting it
-                r['start_datetime'] = start_datetime
+                start_date = str(parser.parse(r['start_date']))
+                r['start_date'] = start_date
                 tasks.append(r)
             except:
                 # if the try block didn't work the the task was not started yet
@@ -181,7 +178,7 @@ def get_task_info(dag_id, task_id, run_id, last_n):
                 break
 
         # sort the tasks by start_time and take last_n tasks that were started
-        tasks = sorted(tasks, key=lambda k: k["start_datetime"], reverse=True)[:last_n]
+        tasks = sorted(tasks, key=lambda k: k["start_date"], reverse=True)[:last_n]
         return tasks
 
     elif dag_id and last_n and run_id and type(task_id) == dict:
@@ -197,9 +194,8 @@ def get_task_info(dag_id, task_id, run_id, last_n):
             r = json.loads(response.content.decode('utf8'))
             try:
                 # convert the start_date to datetime object, to make it sortable
-                start_datetime = str(parser.parse(r['start_date']))
-                # add the converted time to the task dict instead of overwriting it
-                r['start_datetime'] = start_datetime
+                start_date = str(parser.parse(r['start_date']))
+                r['start_date'] = start_date
                 tasks.append(r)
             except:
                 # if the try block didn't work the the task was not started yet
@@ -208,7 +204,7 @@ def get_task_info(dag_id, task_id, run_id, last_n):
                 break
 
         # sort the tasks by start_time and take last_n tasks that were started
-        tasks = sorted(tasks, key=lambda k: k["start_datetime"], reverse=True)[:last_n]
+        tasks = sorted(tasks, key=lambda k: k["start_date"], reverse=True)[:last_n]
         return tasks
 
     else:
@@ -231,31 +227,27 @@ def get_task_info(dag_id, task_id, run_id, last_n):
 
 def get_dag_state(dag_id, run_id):
     # returns the state of a dag, either with a run_id or the last dag that was started
-    headers = {
-        'Cache-Control': 'no-cache',
-        'Content-Type': 'application/json',
-    }
 
     if run_id:
         return get_dag_info(dag_id, run_id, None)['state']
-    else:
-        dags = get_dag_info(dag_id, None, None)
-
+    elif type(dag_id) == list:
         states = []
-        for d in dags:
-            sdt = parser.parse(d['start_date'])
-            p = {'state': d['state'], 'start_datetime': sdt}
-            states.append(p)
-
-        state = sorted(states, key=lambda k: k["start_datetime"], reverse=True)[0]
-        return state['state']
+        for di in dag_id:
+            dags = get_dag_info(di, None, None)
+            for d in dags:
+                star_date = parser.parse(d['start_date'])
+                p = {'state': d['state'], 'start_date': star_date, 'dag_id':d['dag_id']}
+                states.append(p)
+                print(p)
+        state = sorted(states, key=lambda k: k["start_date"], reverse=True)[0]
+        return state['dag_id'], state['state']
 
 
 if __name__ == '__main__':
 
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('action', choices=('trigger', 'get_dag_info', 'get_task_info', 'get_dag_state'), help='decide the action that is send to the server')
-    args_parser.add_argument('--dag_id', choices=('shotedetection', 'feature_extraction', 'aspect_ratio_extraction', 'optical_flow'), help='defines which DAG is targeted')
+    args_parser.add_argument('--dag_id', choices=('shotdetection', 'feature_extraction', 'aspect_ratio_extraction', 'optical_flow'), help='defines which DAG is targeted')
     args_parser.add_argument('--videoid', help='which video is supposed to be processed ,not functional, atm hardcoded to 6ffaf51')
     args_parser.add_argument('--task_id', help='specifies which task is looked at for info')
     args_parser.add_argument('--run_id', help='set the id of a dag run, has to be unique, if this is not used airflow uses an id with the format "manual__YYYY-mm-DDTHH:MM:SS"')
@@ -272,18 +264,24 @@ if __name__ == '__main__':
 
     # these
     if not dag_id:
-        dag_id = ['shotdetection', 'feature_extraction']
+        dag_id = ['shotdetection', 'feature_extraction', 'aspect_ratio_extraction', 'optical_flow']
         task_id_sd = ['push_config_to_xcom', 'get_video', 'shotdetection']
         task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
-        task_id = [task_id_sd, task_id_fe]
+        task_id_ae = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'aspect_ratio_extraction']
+        task_id_of = ['push_config_to_xcom', 'get_video', 'optical_flow']
+        task_id = [task_id_sd, task_id_fe, task_id_ae, task_id_of]
     if dag_id and last_n and not task_id and not run_id:
         task_id_sd = ['push_config_to_xcom', 'get_video', 'shotdetection']
         task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
-        task_id = {'shotdetection': task_id_sd, 'feature_extraction': task_id_fe}
+        task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
+        task_id_ae = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'aspect_ratio_extraction']
+        task_id = {'shotdetection': task_id_sd, 'feature_extraction': task_id_fe, 'aspect_ratio_extraction': task_id_ae, 'optical_flow': task_id_of}
     if dag_id and last_n and run_id and not task_id:
         task_id_sd = ['push_config_to_xcom', 'get_video', 'shotdetection']
         task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
-        task_id = {'shotdetection': task_id_sd, 'feature_extraction': task_id_fe}
+        task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
+        task_id_ae = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'aspect_ratio_extraction']
+        task_id = {'shotdetection': task_id_sd, 'feature_extraction': task_id_fe, 'aspect_ratio_extraction': task_id_ae, 'optical_flow': task_id_of}
 
     if args.action == 'trigger':
         with open('variables.json') as j:

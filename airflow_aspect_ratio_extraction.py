@@ -87,7 +87,7 @@ with DAG(DAG_ID, default_args=default_args,
     task_aspect_ratio_extraction = (DockerOperator(
         task_id='aspect_ratio_extraction',
         image='jacobloe/extract_aspect_ratio:0.7',
-        command='/data {{ti.xcom_pull(key="videoid", dag_id='+DAG_ID+')}}'
+        command='/data {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --file_extension {{ti.xcom_pull(key="extractor_file_extension", dag_id='+DAG_ID+')}}'
                 ' --force_run {{ti.xcom_pull(key="aspect_ratio_extraction_force_run", dag_id='+DAG_ID+')}}',
         volumes=['{{ti.xcom_pull(key="volumes_data_path", dag_id='+DAG_ID+')}}'],
