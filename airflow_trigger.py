@@ -3,6 +3,7 @@ import json
 import argparse
 import logging
 from dateutil import parser
+import os
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -290,14 +291,19 @@ def get_dag_state(dag_id, run_id):
         return state['dag_id'], state['state']
 
 
-def get_dag_logs(dag_id, run_id):
-    pass
+def get_task_logs(logs_folder, dag_id, task_id, run_id):
+    # returns the log-file for a specific task, based on the execution_data of their dag
+
+    log_path = os.path.join(logs_folder, dag_id, task_id, '2020-12-14T21:50:40+00:00', '1.log')
+    with open(log_path) as l:
+        log = l.read()
+    return log
 
 
 if __name__ == '__main__':
 
     args_parser = argparse.ArgumentParser()
-    args_parser.add_argument('action', choices=('trigger', 'get_dag_info', 'get_task_info', 'get_dag_state'), help='decide the action that is send to the server')
+    args_parser.add_argument('action', choices=('trigger', 'get_dag_info', 'get_task_info', 'get_dag_state', 'get_task_logs'), help='decide the action that is send to the server')
     args_parser.add_argument('--dag_id', choices=('shotdetection', 'feature_extraction', 'aspect_ratio_extraction', 'optical_flow'), help='defines which DAG is targeted')
     args_parser.add_argument('--videoid', help='which video is supposed to be processed ,not functional, atm hardcoded to 6ffaf51')
     args_parser.add_argument('--task_id', help='specifies which task is looked at for info')
@@ -350,6 +356,9 @@ if __name__ == '__main__':
 
     elif args.action == 'get_dag_state':
         print(get_dag_state(dag_id, run_id))
+
+    elif args.action == 'get_task_logs':
+        print(get_task_logs('../static/data/airflow/logs', 'optical_flow', 'get_video', 'test1'))
 
     else:
         raise Exception('action "{action}" could not be interpreted'.format(action=args.action))
