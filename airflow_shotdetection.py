@@ -23,6 +23,7 @@ def push_config_to_xcom(**context):
     videoid = context['dag_run'].conf['videoid']
     volumes_data_path = context['dag_run'].conf['volumes_data_path']
     extractor_file_extension = context['dag_run'].conf['extractor_file_extension']
+    get_video_force_run = context['dag_run'].conf['get_video_force_run']
 
     shotdetection_sensitivity = context['dag_run'].conf['shotdetection_sensitivity']
     shotdetection_force_run = context['dag_run'].conf['shotdetection_force_run']
@@ -31,6 +32,7 @@ def push_config_to_xcom(**context):
     context['ti'].xcom_push(key='videoid', value=videoid)
     context['ti'].xcom_push(key='volumes_data_path', value=volumes_data_path)
     context['ti'].xcom_push(key='extractor_file_extension', value=extractor_file_extension)
+    context['ti'].xcom_push(key='get_video_force_run', value=get_video_force_run)
 
     context['ti'].xcom_push(key='shotdetection_sensitivity', value=shotdetection_sensitivity)
     context['ti'].xcom_push(key='shotdetection_force_run', value=shotdetection_force_run)

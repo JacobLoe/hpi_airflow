@@ -21,6 +21,7 @@ def push_config_to_xcom(**context):
 
     videoid = context['dag_run'].conf['videoid']
     volumes_data_path = context['dag_run'].conf['volumes_data_path']
+    get_video_force_run = context['dag_run'].conf['get_video_force_run']
 
     optical_flow_frame_width = context['dag_run'].conf['optical_flow_frame_width']
     optical_flow_step_size = context['dag_run'].conf['optical_flow_step_size']
@@ -31,6 +32,7 @@ def push_config_to_xcom(**context):
     # xcoms are automatically mapped to the task_id and dag_id in which the created to prevent an incorrect pull
     context['ti'].xcom_push(key='videoid', value=videoid)
     context['ti'].xcom_push(key='volumes_data_path', value=volumes_data_path)
+    context['ti'].xcom_push(key='get_video_force_run', value=get_video_force_run)
 
     context['ti'].xcom_push(key='optical_flow_frame_width', value=optical_flow_frame_width)
     context['ti'].xcom_push(key='optical_flow_step_size', value=optical_flow_step_size)
