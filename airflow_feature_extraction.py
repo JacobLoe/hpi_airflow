@@ -73,10 +73,10 @@ with DAG(DAG_ID, default_args=default_args,
         xcom_all=True,
     ))
 
-    task_imageextraction = (DockerOperator(
+    task_image_extraction = (DockerOperator(
         task_id='image_extraction',
         image='jacobloe/extract_images:0.7',
-        command='/data/ {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
+        command='/data {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --trim_frames {{ti.xcom_pull(key="image_extraction_trim_frames", dag_id='+DAG_ID+')}}'
                 ' --frame_width {{ti.xcom_pull(key="image_extraction_frame_width", dag_id='+DAG_ID+')}}'
                 ' --file_extension {{ti.xcom_pull(key="extractor_file_extension", dag_id='+DAG_ID+')}}'
@@ -85,14 +85,14 @@ with DAG(DAG_ID, default_args=default_args,
         xcom_all=True,
     ))
 
-    task_featureextraction = (DockerOperator(
+    task_feature_extraction = (DockerOperator(
         task_id='feature_extraction',
         image='jacobloe/extract_features:0.7',
-        command='/data/ {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
+        command='/data {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --file_extension {{ti.xcom_pull(key="extractor_file_extension", dag_id='+DAG_ID+')}}'
                 ' --force_run {{ti.xcom_pull(key="feature_extraction_force_run", dag_id='+DAG_ID+')}}',
         volumes=['{{ti.xcom_pull(key="volumes_data_path", dag_id='+DAG_ID+')}}',
                  '/home/.keras/:/root/.keras'],
         xcom_all=True,
     ))
-    task_push_config_to_xcom >> task_get_video >> task_shotdetection >> task_imageextraction >> task_featureextraction
+    task_push_config_to_xcom >> task_get_video >> task_shotdetection >> task_image_extraction >> task_feature_extraction

@@ -17,10 +17,7 @@ RUN apt-get update && apt-get install -y build-essential
 RUN pip3 install --trusted-host pypi.python.org apache-airflow==1.10.12 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-1.10.12/constraints-3.8.txt"
 # is needed for docker_operator.py
 RUN pip3 install docker==4.3.1
-# FIXME vim is not supposed to be in the final dockerfile
-RUN apt update && apt install -y vim
 
-#
 #RUN apt-get update
 #RUN apt-get -y install apt-transport-https ca-certificates curl gnupg2 software-properties-common
 #RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
@@ -43,10 +40,11 @@ RUN sed -i '/auth_backend = airflow.api.auth.backend.deny_all/c auth_backend = a
 # create the folder in which airflow is lokking for dags
 RUN mkdir /root/airflow/dags
 
-# dag scripts
+# dag scripts are copied into the default folder for airflow dag scripts
 COPY airflow_shotdetection.py /root/airflow/dags
 COPY airflow_feature_extraction.py /root/airflow/dags
-# FIXME copy remaining dag scripts
+COPY airflow_aspect_ratio_extraction.py /root/airflow/dags
+COPY airflow_optical_flow.py /root/airflow/dags
 
 # copy the scripts that are used by all dags for tasks
 COPY docker_operator.py /root/airflow/dags
