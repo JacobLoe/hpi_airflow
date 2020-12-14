@@ -34,6 +34,8 @@ def trigger_dag(dag_id, videoid, dag_configuration, run_id):
     # insert the run_id into the data for the DAG
     if run_id:
         dag_data = '{' + dag_data[1:-1] + ', "run_id":"{run_id}"'.format(run_id=run_id) + '}'
+    else:
+        raise Exception('')
 
     url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs'.format(dag_id=dag_id)
     response = requests.post(url, headers=headers, data=dag_data)
@@ -65,12 +67,13 @@ def get_dag_info(dag_id, run_id, last_n):
         logger.info('response.headers: ', response.headers)
 
     data = json.loads(response.content.decode('utf8'))
-    # return the last n dag runs
 
+    # return the last n dag runs
     if last_n:
         data = data[-last_n:]
         return data
-    # return a specific DAG run
+
+    # return a specific DAG run, identified by its run_id
     elif run_id:
         for k in data:
             if k['run_id'] == run_id:
@@ -106,7 +109,7 @@ def get_task_info(dag_id, task_id, run_id, last_n):
                         # convert the start_date to datetime object, to make it sortable
                         start_datetime = str(parser.parse(r['start_date']))
                         # add the converted time to the task dict instead of overwriting it
-                        r['start_datetime'] = start_datetime
+                        r['start_date'] = start_datetime
                         tasks.append(r)
                     except:
                         # if the try block didn't work the the task was not started yet
@@ -252,7 +255,7 @@ if __name__ == '__main__':
 
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('action', choices=('trigger', 'get_dag_info', 'get_task_info', 'get_dag_state'), help='decide the action that is send to the server')
-    args_parser.add_argument('--dag_id', help='defines which DAG is targeted')
+    args_parser.add_argument('--dag_id', choices=('shotedetection', 'feature_extraction', 'aspect_ratio_extraction', 'optical_flow'), help='defines which DAG is targeted')
     args_parser.add_argument('--videoid', help='which video is supposed to be processed ,not functional, atm hardcoded to 6ffaf51')
     args_parser.add_argument('--task_id', help='specifies which task is looked at for info')
     args_parser.add_argument('--run_id', help='set the id of a dag run, has to be unique, if this is not used airflow uses an id with the format "manual__YYYY-mm-DDTHH:MM:SS"')
@@ -263,6 +266,9 @@ if __name__ == '__main__':
     task_id = args.task_id
     run_id = args.run_id
     last_n = args.last_n
+    # FIXME hardcoded id just for testing
+    videoid = args.videoid
+    videoid = "6ffaf51" # downloads Occupy Wallstreet
 
     # these
     if not dag_id:
@@ -278,10 +284,6 @@ if __name__ == '__main__':
         task_id_sd = ['push_config_to_xcom', 'get_video', 'shotdetection']
         task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
         task_id = {'shotdetection': task_id_sd, 'feature_extraction': task_id_fe}
-
-    # FIXME hardcoded id just for testing
-    videoid = args.videoid
-    videoid = "6ffaf51" # downloads Occupy Wallstreet
 
     if args.action == 'trigger':
         with open('variables.json') as j:
