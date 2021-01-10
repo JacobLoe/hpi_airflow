@@ -36,7 +36,7 @@ def trigger_dag(dag_id, videoid, dag_configuration, run_id):
     if run_id:
         dag_data = '{' + dag_data[1:-1] + ', "run_id":"{run_id}"'.format(run_id=run_id) + '}'
     else:
-        raise Exception('')
+        raise Exception('run_id missing')
 
     url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs'.format(dag_id=dag_id)
     response = requests.post(url, headers=headers, data=dag_data)

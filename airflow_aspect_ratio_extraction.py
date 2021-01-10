@@ -66,7 +66,7 @@ with DAG(DAG_ID, default_args=default_args,
 
     task_shotdetection = (DockerOperator(
         task_id='shotdetection',
-        image='jacobloe/shot_detection:0.7',
+        image='jacobloe/shotdetect:0.7',
         command='/data {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --sensitivity {{ti.xcom_pull(key="shotdetection_sensitivity", dag_id='+DAG_ID+')}}'
                 ' --force_run {{ti.xcom_pull(key="shotdetection_force_run", dag_id='+DAG_ID+')}}',
