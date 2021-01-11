@@ -18,11 +18,11 @@ logger.propagate = False    # prevent log messages from appearing twice
 def get_video(**context):
     # downloads a video for a given a id and returns it checksum to airflow
 
-    force_run = context['dag_run'].conf['get_video_force_run']
-
     # get the id of the current dag that is used
     dag_id = context['dag_run'].conf['dag_id']
     logger.debug('dag_id', dag_id)
+
+    force_run = context['ti'].xcom_pull(key='get_video_force_run', dag_id=dag_id)
 
     data_root = os.path.split(context['ti'].xcom_pull(key='volumes_data_path', dag_id=dag_id))
     logger.debug('volumes_data_path: ', data_root)
@@ -58,7 +58,7 @@ def get_video(**context):
     logger.debug('video_cache', video_cache)
     done_file = os.path.join(video_cache, '.done')
     # download only if the .done-file doesn't exist. or the .done-file reads a different checksum
-    if not os.path.isfile(done_file) or not open(done_file, 'r').read() == video_checksum or force_run:
+    if not os.path.isfile(done_file) or not open(done_file, 'r').read() == video_checksum or force_run == 'True':
         # create the video_cache folder, delete the old one if needed
         if not os.path.isdir(video_cache):
             os.makedirs(video_cache)

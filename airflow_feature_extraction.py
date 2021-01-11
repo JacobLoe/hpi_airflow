@@ -27,6 +27,7 @@ def push_config_to_xcom(**context):
     # this function should only be called once
 
     videoid = context['dag_run'].conf['videoid']
+
     volumes_data_path = context['dag_run'].conf['volumes_data_path']
     extractor_file_extension = context['dag_run'].conf['extractor_file_extension']
     get_video_force_run = context['dag_run'].conf['get_video_force_run']
@@ -42,6 +43,7 @@ def push_config_to_xcom(**context):
 
     # xcoms are automatically mapped to the task_id and dag_id in which the created to prevent an incorrect pull
     context['ti'].xcom_push(key='videoid', value=videoid)
+
     context['ti'].xcom_push(key='volumes_data_path', value=volumes_data_path)
     context['ti'].xcom_push(key='extractor_file_extension', value=extractor_file_extension)
     context['ti'].xcom_push(key='get_video_force_run', value=get_video_force_run)
@@ -58,7 +60,7 @@ def push_config_to_xcom(**context):
 
 def update_index(**context):
     # sends a request to the imagesearch server to update (or create) a feature index with the current movie
-    headers = {"Content-Type": "application/json", "Accept": "application/json", "Cache-Control": "no-cache, no-store", "Pragma": "no-cache"}
+    headers = {"Content-Type": "application/json", "Accept": "application/json"}
     url = 'http://server_ndd:9000/'.format(hostname=IMAGESEARCH_HOST)
     force_run = True    # ti.xcom_pull(
     r = requests.post(url, headers=headers, json={

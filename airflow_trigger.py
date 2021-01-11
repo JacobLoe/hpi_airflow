@@ -323,21 +323,21 @@ if __name__ == '__main__':
     if not dag_id:
         dag_id = ['shotdetection', 'feature_extraction', 'aspect_ratio_extraction', 'optical_flow']
         task_id_sd = ['push_config_to_xcom', 'get_video', 'shotdetection']
-        task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
+        task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction', 'update_index']
         task_id_ae = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'aspect_ratio_extraction']
         task_id_of = ['push_config_to_xcom', 'get_video', 'optical_flow']
         task_id = [task_id_sd, task_id_fe, task_id_ae, task_id_of]
     if dag_id and last_n and not task_id and not run_id:
         task_id_sd = ['push_config_to_xcom', 'get_video', 'shotdetection']
-        task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
-        task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
+        task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction', 'update_index']
         task_id_ae = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'aspect_ratio_extraction']
+        task_id_of = ['push_config_to_xcom', 'get_video', 'optical_flow']
         task_id = {'shotdetection': task_id_sd, 'feature_extraction': task_id_fe, 'aspect_ratio_extraction': task_id_ae, 'optical_flow': task_id_of}
     if dag_id and last_n and run_id and not task_id:
         task_id_sd = ['push_config_to_xcom', 'get_video', 'shotdetection']
-        task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
-        task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction']
+        task_id_fe = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'feature_extraction', 'update_index']
         task_id_ae = ['push_config_to_xcom', 'get_video', 'shotdetection', 'image_extraction', 'aspect_ratio_extraction']
+        task_id_of = ['push_config_to_xcom', 'get_video', 'optical_flow']
         task_id = {'shotdetection': task_id_sd, 'feature_extraction': task_id_fe, 'aspect_ratio_extraction': task_id_ae, 'optical_flow': task_id_of}
 
     if args.action == 'trigger':
