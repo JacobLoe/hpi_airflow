@@ -1,6 +1,6 @@
 # docker rmi jacobloe/airflow:0.1
 # docker build -f Dockerfile_airflow -t jacobloe/airflow:0.1 .
-# docker volume create --driver local --opt type=none --opt device=/home/jacob/Downloads/hpi/static/data --opt o=bind airflow_cache
+# docker volume create --driver local --opt type=none --opt device=/home/jacob/Downloads/hpi/data --opt o=bind airflow_cache
 # docker run --rm -it -v airflow_cache:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --network ndd_subnet --name airflow jacobloe/airflow:0.1
 # --entrypoint /bin/bash
 # airflow scheduler & airflow webserver -p 8080

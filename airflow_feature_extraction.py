@@ -115,7 +115,7 @@ with DAG(DAG_ID, default_args=default_args,
                 ' --file_extension {{ti.xcom_pull(key="extractor_file_extension", dag_id='+DAG_ID+')}}'
                 ' --force_run {{ti.xcom_pull(key="feature_extraction_force_run", dag_id='+DAG_ID+')}}',
         volumes=['{{ti.xcom_pull(key="volumes_data_path", dag_id='+DAG_ID+')}}',
-                 '/home/.keras/:/root/.keras'],
+                 '/home/.keras_ndd/:/root/.keras'],
         xcom_all=True,
     )
 

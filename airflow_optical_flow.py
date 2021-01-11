@@ -20,6 +20,7 @@ def push_config_to_xcom(**context):
     # this function should only be called once
 
     videoid = context['dag_run'].conf['videoid']
+
     volumes_data_path = context['dag_run'].conf['volumes_data_path']
     get_video_force_run = context['dag_run'].conf['get_video_force_run']
 
@@ -31,6 +32,7 @@ def push_config_to_xcom(**context):
 
     # xcoms are automatically mapped to the task_id and dag_id in which the created to prevent an incorrect pull
     context['ti'].xcom_push(key='videoid', value=videoid)
+
     context['ti'].xcom_push(key='volumes_data_path', value=volumes_data_path)
     context['ti'].xcom_push(key='get_video_force_run', value=get_video_force_run)
 
