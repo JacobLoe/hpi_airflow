@@ -13,5 +13,6 @@
     "optical_flow_window_size": "300",
     "optical_flow_top_percentile": "5",
     "optical_flow_force_run": "False",
-    "get_video_force_run": "False"
+    "get_video_force_run": "False",
+    "update_index_force_run": "False"
 }

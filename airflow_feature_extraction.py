@@ -62,7 +62,7 @@ def update_index(**context):
     # sends a request to the imagesearch server to update (or create) a feature index with the current movie
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     url = 'http://server_ndd:9000/'.format(hostname=IMAGESEARCH_HOST)
-    force_run = True    # ti.xcom_pull(
+    force_run = context['ti'].xcom_pull(key='update_index_force_run', dag_id=DAG_ID)
     r = requests.post(url, headers=headers, json={
                         'update_index': True,
                         'force_run': force_run
