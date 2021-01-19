@@ -1,3 +1,5 @@
+https://hpi-airflow.readthedocs.io/en/latest/?#
+
 1. build the airflow docker image with: "docker build -f Dockerfile_airflow -t jacobloe/airflow:0.1 ."
 2. the image is started with:  
 "docker run --rm -it -v $(pwd)/PATH_TO_DATA:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --name airflow --entrypoint /bin/bash jacobloe/airflow:0.1"

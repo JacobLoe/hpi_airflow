@@ -6,7 +6,6 @@
 # airflow scheduler & airflow webserver -p 8080
 # apt update && apt install -y vim && vim airflow.cfg
 
-# docker run --rm -it -v airflow_cache:/data --entrypoint /bin/bash jacobloe/shot_detection:0.7
 FROM python:3.8-slim-buster
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -31,7 +30,7 @@ RUN sed -i '/auth_backend = airflow.api.auth.backend.deny_all/c auth_backend = a
 # save the airflow logs in the docker volume, the 's# # #' is needed for the command to affect the path
 RUN sed -i 's#base_log_folder = /root/airflow/logs#base_log_folder = /data/airflow/logs#' /root/airflow/airflow.cfg
 
-# create the folder in which airflow is lokking for dags
+# create the folder in which airflow is looking for dags
 RUN mkdir /root/airflow/dags
 
 # dag scripts are copied into the default folder for airflow dag scripts
