@@ -60,7 +60,7 @@ with DAG(DAG_ID, default_args=default_args,
 
     task_optical_flow = (DockerOperator(
         task_id='extract_optical_flow',
-        image='jacobloe/optical_flow:0.7',
+        image='jacobloe/optical_flow:1.0',
         command='/data/ {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --frame_width {{ti.xcom_pull(key="optical_flow_frame_width", dag_id='+DAG_ID+')}}'
                 ' --step_size {{ti.xcom_pull(key="optical_flow_step_size", dag_id='+DAG_ID+')}}'

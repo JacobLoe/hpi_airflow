@@ -88,7 +88,7 @@ with DAG(DAG_ID, default_args=default_args,
 
     task_shotdetection = DockerOperator(
         task_id='shotdetection',
-        image='jacobloe/shotdetect:0.7',
+        image='jacobloe/shotdetect:1.0',
         command='/data {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --sensitivity {{ti.xcom_pull(key="shotdetection_sensitivity", dag_id='+DAG_ID+')}}'
                 ' --force_run {{ti.xcom_pull(key="shotdetection_force_run", dag_id='+DAG_ID+')}}',
@@ -98,7 +98,7 @@ with DAG(DAG_ID, default_args=default_args,
 
     task_image_extraction = DockerOperator(
         task_id='image_extraction',
-        image='jacobloe/extract_images:0.7',
+        image='jacobloe/extract_images:1.0',
         command='/data {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --trim_frames {{ti.xcom_pull(key="image_extraction_trim_frames", dag_id='+DAG_ID+')}}'
                 ' --frame_width {{ti.xcom_pull(key="image_extraction_frame_width", dag_id='+DAG_ID+')}}'
@@ -110,7 +110,7 @@ with DAG(DAG_ID, default_args=default_args,
 
     task_feature_extraction = DockerOperator(
         task_id='feature_extraction',
-        image='jacobloe/extract_features:0.7',
+        image='jacobloe/extract_features:1.0',
         command='/data {{ti.xcom_pull(key="video_checksum", dag_id='+DAG_ID+')}}'
                 ' --file_extension {{ti.xcom_pull(key="extractor_file_extension", dag_id='+DAG_ID+')}}'
                 ' --force_run {{ti.xcom_pull(key="feature_extraction_force_run", dag_id='+DAG_ID+')}}',

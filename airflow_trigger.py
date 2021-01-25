@@ -76,6 +76,7 @@ def get_dag_info(dag_id, run_id, last_n):
 
     elif run_id and type(dag_id) != list:
         # return a specific DAG run, identfied by its run_id
+        # FIXME make this work without specifying a dag_id
         url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs'.format(dag_id=dag_id)  # info
         response = requests.get(url, headers=headers)
 
@@ -167,6 +168,35 @@ def get_task_info(dag_id, task_id, run_id, last_n):
 
         # sort the tasks by start_time and take last_n tasks that were started
         tasks = sorted(tasks, key=lambda k: k["start_date"], reverse=True)[:last_n]
+        return tasks
+
+    if type(dag_id) == list and task_id and not last_n and not run_id:
+        # return all tasks
+        # needs a list of all dag_ids and a list of all the tasks
+        # then it runs get_task_info for each dag_id
+
+        tasks = []
+        for i, di in enumerate(dag_id):
+            dags = get_dag_info(dag_id=di, run_id=None, last_n=last_n)
+            for d in dags:
+                ed = d['execution_date']
+                for ti in task_id[i]:
+                    url = 'http://localhost:8080/api/experimental/dags/{dag_id}/dag_runs/{timestamp}/tasks/{task_id}'.format(dag_id=di, timestamp=ed, task_id=ti)
+                    response = requests.get(url, headers=headers)
+                    r = json.loads(response.content.decode('utf8'))
+                    try:
+                        # convert the start_date to datetime object, to make it sortable
+                        start_date = str(parser.parse(r['start_date']))
+                        r['start_date'] = start_date
+                        tasks.append(r)
+                    except:
+                        # if the try block didn't work the the task was not started yet
+                        # this either due to failure of the previous task
+                        # or the previous task is not finished yet
+                        break
+
+        # sort the tasks by start_time and take last_n tasks that were started
+        tasks = sorted(tasks, key=lambda k: k["start_date"], reverse=True)
         return tasks
 
     elif dag_id and run_id and task_id and not last_n:
@@ -317,7 +347,7 @@ if __name__ == '__main__':
     last_n = args.last_n
     # FIXME hardcoded id just for testing
     videoid = args.videoid
-    videoid = "6ffaf51" # downloads Occupy Wallstreet
+    videoid = "6ffaf51"     # downloads Occupy Wallstreet
 
     # these
     if not dag_id:
