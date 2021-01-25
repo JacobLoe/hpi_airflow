@@ -109,5 +109,3 @@ Logs
 
 The current version of the script doesn't support reading the log files of airflow.
 
-To view the logs visit the airflow webserver at `<http://0.0.0.0:8080/>`_.
-

@@ -9,7 +9,7 @@ Move into the repo::
 
 Build the Dockerfile::
 
-    $ docker build -f Dockerfile_airflow -t jacobloe/airflow:1.0 .
+    $ docker build -f Dockerfile_airflow -t jacobloe/airflow:0.1 .
 
 Create a volume for the video data::
 

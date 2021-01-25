@@ -4,29 +4,12 @@ Extractors
 Near duplicate detection
 ------------------------
 
-Clone the repository from `near duplicate detection <https://github.com/JacobLoe/near_duplicate_detection>`_ and move into the repo::
 
-    $ cd near_duplicate_detection
-
-Build the Dockerfiles::
-
-    $ docker build -f Dockerfile_shot_detection -t jacobloe/shotdetect:1.0 .
-    $ docker build -f Dockerfile_extract_images -t jacobloe/extract_images:1.0 .
-    $ docker build -f Dockerfile_extract_aspect_ratio -t jacobloe/extract_aspect_ratio:1.0 .
-    $ docker build -f Dockerfile_extract_features -t jacobloe/extract_features:1.0 .
-    $ docker build -f Dockerfile_server_ndd -t jacobloe/server_ndd:1.0 .
-    $ docker build -f Dockerfile_client_flask -t jacobloe/client_flask:1.0 .
 
 Optical flow
 ------------
 
-Clone the repository from `optical flow <https://github.com/JacobLoe/optical_flow>`_ and move into the repo::
 
-    $ cd optical_flow
-
-Build the Dockerfile::
-
-    $ docker build -f Dockerfile_optical_flow -t jacobloe/optical_flow:1.0 .
 
 folder structure
 ----------------

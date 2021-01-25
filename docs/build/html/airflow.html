@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Airflow &#8212; hpi extractor airflow 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Extractors" href="extractors.html" />
+    <link rel="prev" title="installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="airflow">
+<h1>Airflow<a class="headerlink" href="#airflow" title="Permalink to this headline">¶</a></h1>
+<p>Run the image.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ docker run --rm -it -v airflow_cache:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --network ndd_subnet --name airflow jacobloe/airflow:0.1
+</pre></div>
+</div>
+<p>If extracted features are to be used for the near duplicate detection “–network ndd_subnet” has to be included.
+The networks needs to be the same as the one for the server and client from the near duplicate detection.</p>
+<p>In your browser go to <a class="reference external" href="http://0.0.0.0:8080/">http://0.0.0.0:8080/</a> to get access to the airflow webserver.</p>
+<div class="section" id="start-an-extractor">
+<h2>Start an extractor<a class="headerlink" href="#start-an-extractor" title="Permalink to this headline">¶</a></h2>
+<p>The different extractors are triggered with the airflow_trigger.py. The script needs Python 3 installed. To start the shotdetection use the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python airflow_trigger.py trigger --dag_id shotdetection --run_id shotdetection_test0
+</pre></div>
+</div>
+<p>Choose with “–dag_id” which extractor is started. Use “–help” to get a list of the available extractors.
+“–run_id” sets a unique id for a extractor which can be used to find it again. If the id was already used, the extractor cannot be started.</p>
+<p>To change any parameters of the extractors change them in the <em>variables.json</em> in the repository. The file is read when the script is started.</p>
+</div>
+<div class="section" id="get-information-about-an-extractor">
+<h2>Get information about an extractor<a class="headerlink" href="#get-information-about-an-extractor" title="Permalink to this headline">¶</a></h2>
+<p>The airflow_trigger.py can also be used to get information about any graphs or tasks that are/were runnning. The commands only work if the airflow webserver is running.
+With “–help” you get list of the possible positional arguments “trigger, get_dag_info, …”.
+For each of options the optional arguments can be combined freely to get a range of different information back.</p>
+<div class="section" id="dags">
+<h3>DAGs<a class="headerlink" href="#dags" title="Permalink to this headline">¶</a></h3>
+<p>Use the following command to get a list of all dags that have run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python airflow_trigger.py get_dag_info
+</pre></div>
+</div>
+<p>The list is sorted by the start date of the dag. The first item in the list is the latest start date. The script returns all information in this way.</p>
+<p>The dag information contains the following:</p>
+<ul class="simple">
+<li><p>run_id</p></li>
+<li><p>dag_id</p></li>
+<li><p>start_date, end_date, duration</p></li>
+<li><p>execution_date</p></li>
+<li><p>state</p></li>
+</ul>
+<p>With <em>—dag_id</em>, <em>—run_id</em> and <em>—last_n</em> the returns can be modified. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python airflow_trigger.py get_dag_info --dag_id feature_extraction
+</pre></div>
+</div>
+<p>will return only the dags for the feature extraction. Adding <em>—last_n n</em> limits the return to information about the last n dags.</p>
+<p>If the <em>run_id</em> of a dag is known the information for only that dag can be returned by using <em>—run_id</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python airflow_trigger.py get_dag_info --dag_id feature_extraction --run_id RUN_ID
+</pre></div>
+</div>
+<p>NOTE: in the current version of the script the dag_id of the dag has to be specified for <em>—run_id</em> to work.</p>
+<p>Running the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python airflow_trigger get_dag_state
+</pre></div>
+</div>
+<p>will return the state (running, success, failed) of the last dag that was started.
+With <em>—run_id</em> the state of a specific dag can be returned.</p>
+</div>
+<div class="section" id="tasks">
+<h3>Tasks<a class="headerlink" href="#tasks" title="Permalink to this headline">¶</a></h3>
+<p>Similar to <em>get_dag_info</em>, <em>get_task_info</em> returns all tasks for all dags that have run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python airflow_trigger.py get_task_info
+</pre></div>
+</div>
+<p>The task information contains the following:</p>
+<ul class="simple">
+<li><p>task_id</p></li>
+<li><p>dag_id</p></li>
+<li><p>start_date, end_date, duration</p></li>
+<li><p>execution_date</p></li>
+<li><p>state</p></li>
+</ul>
+<p>Adding <em>—dag_id</em> or <em>—run_id</em> returns the all tasks that have run for the specified dags and <em>—last_n</em> limits the amount of information that is returned:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python airflow_trigger.py get_task_info --dag_id feature_extraction --last_n 5
+$ python airflow_trigger.py get_task_info --run_id RUN_ID --last_n 5
+</pre></div>
+</div>
+<p>With <em>—task_id</em> a task can be selected and than only information about those tasks will be returned:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python airflow_trigger get_task_info --task_id get_video
+</pre></div>
+</div>
+<p>This would return all tasks named <em>get_video</em> regardless of which dag it was started in.
+Adding <em>—dag_id</em> or <em>—run_id</em> would restrict the return to the specified dag.</p>
+<p>The supported tasks are for each of the dags are:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 81%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>shotdetection</p></td>
+<td><p>push_config_to_xcom, get_video, shotdetection</p></td>
+</tr>
+<tr class="row-even"><td><p>feature_extraction</p></td>
+<td><p>push_config_to_xcom, get_video, shotdetection, image_extraction, feature_extraction, update_index</p></td>
+</tr>
+<tr class="row-odd"><td><p>aspect_ratio_extraction</p></td>
+<td><p>push_config_to_xcom, get_video, shotdetection, image_extraction, aspect_ratio_extraction</p></td>
+</tr>
+<tr class="row-even"><td><p>optical_flow</p></td>
+<td><p>push_config_to_xcom, get_video, optical_flow</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="logs">
+<h3>Logs<a class="headerlink" href="#logs" title="Permalink to this headline">¶</a></h3>
+<p>The current version of the script doesn’t support reading the log files of airflow.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">hpi extractor airflow</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Airflow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#start-an-extractor">Start an extractor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#get-information-about-an-extractor">Get information about an extractor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#dags">DAGs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tasks">Tasks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logs">Logs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="extractors.html">Extractors</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">installation</a></li>
+      <li>Next: <a href="extractors.html" title="next chapter">Extractors</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Jacob Löbkens.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/airflow.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
