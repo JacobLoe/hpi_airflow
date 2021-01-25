@@ -40,7 +40,11 @@ The list is sorted by the start date of the dag. The first item in the list is t
 
 The dag information contains the following:
 
-Star
+* run_id
+* dag_id
+* start_date, end_date, duration
+* execution_date
+* state
 
 With *---dag_id*, *---run_id* and *---last_n* the returns can be modified. For example::
 
@@ -70,7 +74,11 @@ Similar to *get_dag_info*, *get_task_info* returns all tasks for all dags that h
 
 The task information contains the following:
 
-
+* task_id
+* dag_id
+* start_date, end_date, duration
+* execution_date
+* state
 
 Adding *---dag_id* or *---run_id* returns the all tasks that have run for the specified dags and *---last_n* limits the amount of information that is returned::
 
@@ -84,9 +92,17 @@ With *---task_id* a task can be selected and than only information about those t
 This would return all tasks named *get_video* regardless of which dag it was started in.
 Adding *---dag_id* or *---run_id* would restrict the return to the specified dag.
 
-The supported tasks are:
+The supported tasks are for each of the dags are:
 
-
++-----------------------+-------------------------------------------------------------------------------------------------+
+|shotdetection          |push_config_to_xcom, get_video, shotdetection                                                    |
++-----------------------+-------------------------------------------------------------------------------------------------+
+|feature_extraction     |push_config_to_xcom, get_video, shotdetection, image_extraction, feature_extraction, update_index|
++-----------------------+-------------------------------------------------------------------------------------------------+
+|aspect_ratio_extraction|push_config_to_xcom, get_video, shotdetection, image_extraction, aspect_ratio_extraction         |
++-----------------------+-------------------------------------------------------------------------------------------------+
+|optical_flow           |push_config_to_xcom, get_video, optical_flow                                                     |
++-----------------------+-------------------------------------------------------------------------------------------------+
 
 Logs
 ^^^^
