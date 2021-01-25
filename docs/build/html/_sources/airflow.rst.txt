@@ -42,24 +42,17 @@ The dag information contains the following:
 
 Star
 
-With *---dag_id*, *---run_id* and *---last_n* the returns can be modified. For example::
+With *--dag_id*, *--run_id* and *--last_n* the returns can be modified. For example::
 
     $ python airflow_trigger.py get_dag_info --dag_id feature_extraction
 
-will return only the dags for the feature extraction. Adding *---last_n n* limits the return to information about the last n dags.
+will return only the dags for the feature extraction. Adding *--last_n n* limits the return to information about the last n dags.
 
-If the *run_id* of a dag is known the information for only that dag can be returned by using *---run_id*::
+If the *run_id* of a dag is known the information for only that dag can be returned by using *--run_id*::
 
     $ python airflow_trigger.py get_dag_info --dag_id feature_extraction --run_id RUN_ID
 
-NOTE: in the current version of the script the dag_id of the dag has to be specified for *---run_id* to work.
-
-Running the following::
-
-    $ python airflow_trigger get_dag_state
-
-will return the state (running, success, failed) of the last dag that was started.
-With *---run_id* the state of a specific dag can be returned.
+NOTE: in the current version of the script the dag_id of the dag has to be specified.
 
 Tasks
 ^^^^^
@@ -72,17 +65,14 @@ The task information contains the following:
 
 
 
-Adding *---dag_id* or *---run_id* returns the all tasks that have run for the specified dags and *---last_n* limits the amount of information that is returned::
+Adding *--dag_id* or *--run_id* returns the all tasks that have run for the specified dags and *--last_n* limits the amount of information that is returned::
 
     $ python airflow_trigger.py get_task_info --dag_id feature_extraction --last_n 5
     $ python airflow_trigger.py get_task_info --run_id RUN_ID --last_n 5
 
 With *---task_id* a task can be selected and than only information about those tasks will be returned::
 
-    $ python airflow_trigger get_task_info --task_id get_video
-
-This would return all tasks named *get_video* regardless of which dag it was started in.
-Adding *---dag_id* or *---run_id* would restrict the return to the specified dag.
+    $ python airflow_trigger
 
 The supported tasks are:
 

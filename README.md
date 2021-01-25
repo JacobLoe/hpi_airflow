@@ -1,4 +1,4 @@
-https://hpi-airflow.readthedocs.io/en/latest/?#
+https://hpi-airflow.readthedocs.io/en/latest/?#D
 
 1. build the airflow docker image with: "docker build -f Dockerfile_airflow -t jacobloe/airflow:0.1 ."
 2. the image is started with:  
