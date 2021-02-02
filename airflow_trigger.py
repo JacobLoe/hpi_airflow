@@ -347,7 +347,7 @@ if __name__ == '__main__':
     last_n = args.last_n
     # FIXME hardcoded id just for testing
     videoid = args.videoid
-    videoid = "6ffaf51"     # downloads Occupy Wallstreet
+    # videoid = "6ffaf51"     # downloads Occupy Wallstreet
 
     # these
     if not dag_id:
@@ -371,7 +371,7 @@ if __name__ == '__main__':
         task_id = {'shotdetection': task_id_sd, 'feature_extraction': task_id_fe, 'aspect_ratio_extraction': task_id_ae, 'optical_flow': task_id_of}
 
     if args.action == 'trigger':
-        with open('variables.json') as j:
+        with open('config.json') as j:
             data = json.load(j)
             params = {key: data[key] for key in data}
         trigger_dag(dag_id, videoid, params, run_id)
