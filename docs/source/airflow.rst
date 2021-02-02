@@ -20,7 +20,8 @@ The different extractors are triggered with the airflow_trigger.py. The script n
 Choose with "--dag_id" which extractor is started. Use "--help" to get a list of the available extractors.
 "--run_id" sets a unique id for a extractor which can be used to find it again. If the id was already used, the extractor cannot be started.
 
-To change any parameters of the extractors change them in the *variables.json* in the repository. The file is read when the script is started.
+To change any parameters of the extractors change them in the *config.json* in the repository. The file is read when the script is started.
+
 
 Get information about an extractor
 ----------------------------------
