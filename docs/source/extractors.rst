@@ -17,7 +17,6 @@ Build the Dockerfiles::
     $ docker build -f Dockerfile_server_ndd -t jacobloe/server_ndd:1.0 .
     $ docker build -f Dockerfile_client_flask -t jacobloe/client_flask:1.0 .
 
-
 The command to start any of the extractors can be found in the file *docker_commands* in the repository.
 
 Airflow assumes the images exist with the names in the format *jacobLoe/<extractor_name>:1.0*. If other names are wanted the in the relevant airflow-files has to changed.
@@ -52,12 +51,12 @@ To start the client use::
     $ docker run --rm -it -p 8000:80 --network ndd_subnet --name client_flask jacobloe/client_flask:1.0
 
 The client can be accessed through a browser on `<http://0.0.0.0:8000/imagesearch/>`_.
-By clicking on *upload a file* one can upload an image from the pc. Clicking on *submit* will then send the image to the server and then return the results.
+By clicking on the button *Choose File* one can upload an image from the pc. Clicking on *Upload* will then send the image to the server and then return the results.
 Depending on the size of the index the process may take a minute.
 
-The number of results displayed can be adjusted by entering a positive integer in the appropiate field, before submitting an image.
+The number of results displayed can be adjusted by entering a positive integer in the box to the left of the *Upload*-Button, before submitting an image.
 
-By checking the checkbox *trim frame* any letterbox around the uploaded image will be removed before searching for duplicate images.
+By checking the checkbox *remove letterbox* any letterbox around the uploaded image will be removed before searching for duplicate images.
 
 Optical flow
 ------------
