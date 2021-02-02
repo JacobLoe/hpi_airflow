@@ -20,7 +20,15 @@ The different extractors are triggered with the airflow_trigger.py. The script n
 Choose with "--dag_id" which extractor is started. Use "--help" to get a list of the available extractors.
 "--run_id" sets a unique id for a extractor which can be used to find it again. If the id was already used, the extractor cannot be started.
 
-To change any parameters of the extractors change them in the *config.json* in the repository. The file is read when the script is started.
+Whenever a extractor has run successfully a *.done-file* will be written which includes the date the extractor was last changed and the parameters that were used to run it.
+If the same extractor is run again, the extraction for any results for which the content of the *.done-file* matches the parameters of the current extractor will be skipped.
+Optionally each extractor (including the tasks *update_index* and *get_video*) has a parameter *force_run* which if set to *True* forces the extractor to run again regardless
+of the *.done-file*.
+
+The parameters of the extractors are defined in the file *config.json* and can be easily changed there. Information on the effect of each parameter can be found in the extractor scripts themselves.
+
+Each time an extractor is triggered with the script, its send the parameters to the airflow server and where they will first be copied to airflow variables called *xcom*.
+*Xcoms* are unique for each graph in airflow so this its made sure that changing starting a new extractor with different parameters interfere with other parameters.
 
 
 Get information about an extractor
