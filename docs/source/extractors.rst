@@ -51,7 +51,7 @@ To start the client use::
     $ docker run --rm -it -p 8000:80 --network ndd_subnet --name client_flask jacobloe/client_flask:1.0
 
 The client can be accessed through a browser on `<http://0.0.0.0:8000/imagesearch/>`_.
-By clicking on the button *Choose File* one can upload an image from the pc. Clicking on *Upload* will then send the image to the server and then return the results.
+By clicking on the button *Choose File*, one can upload an image from the pc. Clicking on *Upload* will then send the image to the server and then return the results.
 Depending on the size of the index the process may take a minute.
 
 The number of results displayed can be adjusted by entering a positive integer in the box to the left of the *Upload*-Button, before submitting an image.
@@ -94,6 +94,8 @@ The folder also contains the logs for airflow.
     │       ├── VIDEOID0.csv
     │       └── .done
     │   ├── opticalflow
+    │       ├── VIDEOID0.csv
+    │       └── .done
     │   └── media
     │       ├── VIDEOID0.mp4
     │       └── .done
