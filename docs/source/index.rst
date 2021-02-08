@@ -7,7 +7,7 @@ the `optical flow <https://github.com/JacobLoe/optical_flow>`_ repositories have
 
 Prerequisites are:
     * Ubuntu 20.04
-    * Docker 19.03.8 and 20.10.2
+    * Docker 19.03.8 or 20.10.2
     * Python 3.8 or higher
 
 Installation guide

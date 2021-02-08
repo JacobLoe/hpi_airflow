@@ -1,6 +1,6 @@
 .. _extractor_configuration:
 
-Extractor configuration
+extractor configuration
 =======================
 
 The config-file contains the following parameters (including their default values):
@@ -22,8 +22,6 @@ The config-file contains the following parameters (including their default value
     * "get_video_force_run": "False"
     * "update_index_force_run": "False"
 
-If a par
-
 *volumes_data_path* maps the the docker volume that was created during the installation to a folder inside all of the docker files.
 Where *airflow_cache* is the docker volume and */data* the internal volume of the docker container.
 
@@ -36,17 +34,18 @@ It is advised to keep the default value of this parameter.
 
 *image_extraction_trim_frames* decides whether black border of images is removed before they are saved.
 
-*image_extraction_frame_width* sets the width at which the images are saved. The heigth is computed according to the aspect ratio of the image.
+*image_extraction_frame_width* sets the width at which the images are saved. The height is computed according to the aspect ratio of the image.
 
-*optical_flow_frame_width*
+*optical_flow_frame_width* sets the width of the images from which the optical flow is computed.
 
-*optical_flow_step_size*
+*optical_flow_step_size* defines at the distance between two optical flow calculations, in milliseconds.
 
-*optical_flow_window_size*
+*optical_flow_window_size* defines the range in which images for optical flow calculation are extracted, in milliseconds.
 
-*optical_flow_top_percentile*
+*optical_flow_top_percentile* controls how the magnitudes are scaled, by filtering low frequency values. The scaling factor is the nth-percentile.
+A value of 100 means the magnitudes are scaled by the maximum magnitude.
 
-*get_video_force_run*
+*get_video_force_run* if set to *True* the video will be downloaded regardless of it was already downloaded.
 
 *update_index_force_run* if set to *True* forces the NDD server to create the index from scratch.
 
