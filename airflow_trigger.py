@@ -371,6 +371,8 @@ if __name__ == '__main__':
         task_id = {'shotdetection': task_id_sd, 'feature_extraction': task_id_fe, 'aspect_ratio_extraction': task_id_ae, 'optical_flow': task_id_of}
 
     if args.action == 'trigger':
+        if not videoid:
+            raise Exception('A videoid is required to start a dag')
         with open('config.json') as j:
             data = json.load(j)
             params = {key: data[key] for key in data}
