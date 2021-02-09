@@ -72,7 +72,7 @@ Build the Dockerfile::
 folder structure
 ----------------
 
-The extractors will create the following folder structure (or assume that results in this way). The name of folder data doesn't matter
+The extractors will create the following folder structure (and assume that results are stored this way). The name of folder *data* doesn't matter
 The folder also contains the logs for airflow.
 
 .. code-block:: bash
