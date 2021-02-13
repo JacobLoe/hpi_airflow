@@ -15,3 +15,7 @@ Create a volume for the video data::
 
     $ docker volume create --driver local --opt type=none --opt device=ABSOLUTE_PATH_TO_DATA --opt o=bind airflow_cache
 
+Create the docker subnet for the communication between airflow and the ndd server::
+
+    $ docker network create --driver bridge ndd_subnet
+
