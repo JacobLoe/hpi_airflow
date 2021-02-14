@@ -31,7 +31,7 @@ The server has to be started for the feature extraction in airflow to run succes
 
 Start the server with the following command::
 
-    $ docker run --rm -it -v airflow_cache:/data -p 9000:9000 --network ndd_subnet -v /home/.keras_ndd/:/root/.keras --name server_ndd jacobloe/server_ndd:1.0 /data
+    $ docker run --rm -it -v airflow_cache:/data -p 9000:9000 --network ndd_subnet -v /home/.keras_ndd/:/root/.keras --name server_ndd jacobloe/server_ndd:1.0
 
 On startup creates folder *.keras_ndd* in */home* and maps it to */root/.keras* in the docker container.
 This is done to save the model that is downloaded by the server and the feature extraction, in a way that doesn't interfere with other models downloaded into *home/.keras*.
