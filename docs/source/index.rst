@@ -1,9 +1,7 @@
 Welcome to hpi extractor airflow's documentation!
 =================================================
 
-The code for the project lies at `<https://github.com/JacobLoe/hpi_airflow>`_.
-The guide assumes that the all Dockerfiles from the `near duplicate detection <https://github.com/JacobLoe/near_duplicate_detection>`_ and
-the `optical flow <https://github.com/JacobLoe/optical_flow>`_ repositories have already been built.
+The code for the project lies at `<https://github.com/ProjectAdA/ada-va>`_.
 
 Prerequisites are:
     * Ubuntu 20.04
@@ -19,7 +17,7 @@ Installation guide
 
    installation
    airflow
-   extractors
+   ndd
 
 Indices and tables
 ==================

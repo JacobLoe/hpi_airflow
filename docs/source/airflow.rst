@@ -1,11 +1,13 @@
+.. _airflow:
+
 Airflow
 =======
 
-Run the image.::
+Airflow is started with the following command::
 
-    $ docker run --rm -it -v airflow_cache:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --network ndd_subnet --name airflow jacobloe/airflow:1.0
+    $ docker run --rm -it -v airflow_cache:/data -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --network ada_subnet --name airflow jacobloe/airflow:1.0
 
-If extracted features are to be used for the near duplicate detection "--network ndd_subnet" has to be included.
+If extracted features are to be used for the near duplicate detection *--network ada_subnet* has to be included.
 The networks needs to be the same as the one for the server and client from the near duplicate detection.
 
 In your browser go to `<http://0.0.0.0:8080/>`_ to get access to the airflow webserver.

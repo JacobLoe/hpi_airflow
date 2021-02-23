@@ -20,7 +20,6 @@ The config-file contains the following parameters (including their default value
     * "optical_flow_top_percentile": "5"
     * "optical_flow_force_run": "False"
     * "get_video_force_run": "False"
-    * "update_index_force_run": "False"
 
 *volumes_data_path* maps the the docker volume that was created during the installation to a folder inside all of the docker files.
 Where *airflow_cache* is the docker volume and */data* the internal volume of the docker container.
@@ -46,6 +45,3 @@ It is advised to keep the default value of this parameter.
 A value of 100 means the magnitudes are scaled by the maximum magnitude.
 
 *get_video_force_run* if set to *True* the video will be downloaded regardless of it was already downloaded.
-
-*update_index_force_run* if set to *True* forces the NDD server to create the index from scratch.
-
