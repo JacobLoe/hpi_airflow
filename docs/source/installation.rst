@@ -14,26 +14,26 @@ airflow
 
 Build the Dockerfile::
 
-    $ docker build -f ada-va/docker/Dockerfile_airflow -t jacobloe/airflow:1.0 ada-va/workflow
+    $ docker build -f ada-va/docker/Dockerfile_airflow -t jacobloe/airflow:1.0 ada-va
 
 extractors
 ----------
 
 Build the Dockerfiles::
 
-    $ docker build -f ada-va/docker/Dockerfile_shot_detection -t jacobloe/shotdetect:1.0 ada-va/features/near_duplicate_detection
-    $ docker build -f ada-va/docker/Dockerfile_extract_images -t jacobloe/extract_images:1.0 ada-va/features/near_duplicate_detection
-    $ docker build -f ada-va/docker/Dockerfile_extract_aspect_ratio -t jacobloe/extract_aspect_ratio:1.0 ada-va/features/near_duplicate_detection
-    $ docker build -f ada-va/docker/Dockerfile_extract_features -t jacobloe/extract_features:1.0 ada-va/features/near_duplicate_detection
+    $ docker build -f ada-va/docker/Dockerfile_shot_detection -t jacobloe/shotdetect:1.0 ada-va
+    $ docker build -f ada-va/docker/Dockerfile_extract_images -t jacobloe/extract_images:1.0 ada-va
+    $ docker build -f ada-va/docker/Dockerfile_extract_aspect_ratio -t jacobloe/extract_aspect_ratio:1.0 ada-va
+    $ docker build -f ada-va/docker/Dockerfile_extract_features -t jacobloe/extract_features:1.0 ada-va
 
-    $ docker build -f ada-va/docker/Dockerfile_optical_flow -t jacobloe/optical_flow:1.0 ada-va/features/optical_flow
+    $ docker build -f ada-va/docker/Dockerfile_optical_flow -t jacobloe/optical_flow:1.0 ada-va
 
 Airflow assumes the images exist with the names in the format *jacobLoe/<extractor_name>:1.0*. If other names are wanted the in the relevant airflow-files has to changed.
 
 The server and client are built::
 
-    $ docker build -f ada-va/docker/Dockerfile_server_ndd -t jacobloe/server_ndd:1.0 ada-va/features/near_duplicate_detection
-    $ docker build -f ada-va/docker/Dockerfile_client_flask -t jacobloe/client_flask:1.0 ada-va/features/near_duplicate_detection
+    $ docker build -f ada-va/docker/Dockerfile_server_ndd -t jacobloe/server_ndd:1.0 ada-va
+    $ docker build -f ada-va/docker/Dockerfile_client_flask -t jacobloe/client_flask:1.0 ada-va
 
 additional requirements
 -----------------------
