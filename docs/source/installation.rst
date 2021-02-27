@@ -28,6 +28,8 @@ Build the Dockerfiles::
 
     $ docker build -f ada-va/docker/Dockerfile_optical_flow -t jacobloe/optical_flow:1.0 ada-va
 
+    $ docker build -f ada-va/docker/Dockerfile_transcribe_audio -t jacobloe/transcribe_audio:1.0 ada-va
+
 Airflow assumes the images exist with the names in the format *jacobLoe/<extractor_name>:1.0*. If other names are wanted the in the relevant airflow-files has to changed.
 
 The server and client are built::

@@ -25,3 +25,11 @@ docker run --rm -it -v $(pwd)/static/PATH_TO_FEATURES:/data -v /home/.keras_ndd/
 
 Optical flow
 ------------
+
+Automatic speech recognition
+----------------------------
+
+asr::
+
+    $ docker run --rm -it -v airflow_cache:/data jacobloe/transcribe_audio:1.0 /data 6ffaf51e5040724cd40c4411fcb872474b653710e9c88271ec98efe549c71e01
+
