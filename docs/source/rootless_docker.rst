@@ -1,4 +1,4 @@
-.. _rootless docker:
+.. _rootless_docker:
 
 Rootless docker
 ===============
