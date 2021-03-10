@@ -15,14 +15,18 @@ Set up the docker daemon::
 
     $ dockerd-rootless-setuptool.sh install
 
-Enable the docker daemon::
+Enable the docker daemon on startup::
 
     $ systemctl --user enable docker
     $ sudo loginctl enable-linger $(whoami)
 
-Specify the socket path for docker::
+Specify the socket path for docker. Use the first command to enable docker in the current terminal.
+You'll have to re-enter the command every time a new terminal is opened. Optionally enter the second command to
+enter the line in to the *.bashrc*. Docker will then be enable anytime a new terminal is opened::
 
     $ export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
+
+    $ echo "export DOCKER_HOST=unix:///run/user/1000/docker.sock" >> .bashrc
 
 Test docker::
 

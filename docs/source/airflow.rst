@@ -15,9 +15,9 @@ In your browser go to `<http://0.0.0.0:8080/>`_ to get access to the airflow web
 Start an extractor
 ------------------
 
-The different extractors are triggered with the airflow_trigger.py. The script needs Python 3 installed. To start the shotdetection use the following command::
+The different extractors are triggered with the airflow_trigger.py. The script needs Python 3 installed. For example to start the shotdetection use the following command::
 
-    $ python airflow_trigger.py trigger --dag_id shotdetection --run_id shotdetection_test0 --video_id 6ffaf51e5040724cd40c4411fcb872474b653710e9c88271ec98efe549c71e01
+    $ python airflow_trigger.py trigger --dag_id shotdetection --run_id shotdetection_test0 --videoid 6ffaf51e5040724cd40c4411fcb872474b653710e9c88271ec98efe549c71e01
 
 Choose with "--dag_id" which extractor is started. Use "--help" to get a list of the available extractors.
 "--run_id" sets a unique id for a extractor which can be used to find it again. If the id was already used, the extractor cannot be started.

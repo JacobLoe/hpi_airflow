@@ -20,6 +20,11 @@ The config-file contains the following parameters (including their default value
     * "optical_flow_top_percentile": "5"
     * "optical_flow_force_run": "False"
     * "get_video_force_run": "False"
+    * "asr_segment_length_ms": "3000"
+    * "asr_overlap_length_ms": "100"
+    * "asr_min_confidence": "10.0"
+    * "asr_timestamp_threshold": "50"
+    * "asr_force_run": "False"
 
 *volumes_data_path* maps the the docker volume that was created during the installation to a folder inside all of the docker files.
 Where *airflow_cache* is the docker volume and */data* the internal volume of the docker container.
@@ -45,3 +50,11 @@ It is advised to keep the default value of this parameter.
 A value of 100 means the magnitudes are scaled by the maximum magnitude.
 
 *get_video_force_run* if set to *True* the video will be downloaded regardless of it was already downloaded.
+
+*asr_segment_length_ms*
+
+*asr_overlap_length_ms*
+
+*asr_min_confidence*
+
+*asr_timestamp_threshold*
