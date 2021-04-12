@@ -5,46 +5,46 @@ installation
 
 Clone the repository from `<https://github.com/ProjectAdA/ada-va>`_
 
-Move into the repo::
+Move into the folder *ada-va* of the repository::
 
-    cd ada-va
+    cd ada-va/ada-va
 
-airflow
--------
-
-Build the Dockerfile::
-
-    docker build -f ada-va/docker/Dockerfile_airflow -t jacobloe/airflow:1.0 ada-va
 
 extractors
 ----------
 
-Build the Dockerfiles::
+Build the Dockerfiles for the extractors::
 
-    docker build -f ada-va/docker/Dockerfile_shot_detection -t jacobloe/shotdetect:1.0 ada-va
-    docker build -f ada-va/docker/Dockerfile_extract_images -t jacobloe/extract_images:1.0 ada-va
-    docker build -f ada-va/docker/Dockerfile_extract_aspect_ratio -t jacobloe/extract_aspect_ratio:1.0 ada-va
-    docker build -f ada-va/docker/Dockerfile_extract_features -t jacobloe/extract_features:1.0 ada-va
+    docker-compose -f docker-compose.extractors.yml build
 
-    docker build -f ada-va/docker/Dockerfile_optical_flow -t jacobloe/optical_flow:1.0 ada-va
+The imagesearch client is built with ::
 
-    docker build -f ada-va/docker/Dockerfile_transcribe_audio -t jacobloe/transcribe_audio:1.0 ada-va
+    docker build -f docker/Dockerfile_client_flask -t ada-va/client_flask:1.0 .
 
-Airflow assumes the images exist with the names in the format *jacobLoe/<extractor_name>:1.0*. If other names are wanted the in the relevant airflow-files has to changed.
+airflow
+-------
 
-The server and client are built::
+First create volumes for the cache and logs fro airflow::
 
-    docker build -f ada-va/docker/Dockerfile_server_ndd -t jacobloe/server_ndd:1.0 ada-va
-    docker build -f ada-va/docker/Dockerfile_client_flask -t jacobloe/client_flask:1.0 ada-va
+    mkdir -p ./volumes/ada-va-cache && mkdir -p ./volumes/airflow-logs
 
-additional requirements
------------------------
+Refer to :ref:`folder_structure` to see how the volume is structured.
+Initialize the database::
 
-All docker images share a volume to write/read the video data and logs. The path defined with *devide=* has to be an absolute path::
+    docker network create ada-rproxy
+    docker-compose -f docker-compose.yml up init
 
-    docker volume create --driver local --opt type=none --opt device=ABSOLUTE_PATH_TO_DATA --opt o=bind airflow_cache
+Start the airflow stack::
 
-The docker images also need a docker subnet to communicate between each other::
+    docker-compose -f docker-compose.yml up
 
-    docker network create --driver bridge ada_subnet
+Configuration
+-------------
+
+The docker-compose files is configured with three files.
+
+* secrets.env
+* .env
+
+*.env* sets the versions of python, the postgres database and airflow. The names of the extractor docker images are also set here.
 

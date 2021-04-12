@@ -9,9 +9,8 @@ Prerequisites
 Software requirements:
     * Ubuntu 20.04
     * Docker 19.03.8 or 20.10.2
+    * docker-compose 1.28.5
     * Python 3.8 or higher
-
-If you want to run docker as a nonroot-user you have to use 20.10.2 and then refer to the following link :ref:`rootless_docker`.
 
 ADA installation and user guide
 ^^^^^^^^^^^^^^^^^^
@@ -22,7 +21,6 @@ ADA installation and user guide
 
    installation
    airflow
-   ndd
 
 Indices and tables
 ==================
