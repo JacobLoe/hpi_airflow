@@ -43,8 +43,19 @@ Configuration
 
 The docker-compose files is configured with three files.
 
-* secrets.env
 * .env
+* secrets.env
+* ada-va.cfg
+* airflow.env
 
 *.env* sets the versions of python, the postgres database and airflow. The names of the extractor docker images are also set here.
 
+*secrets.env* contains the credentials that docker-compose uses to set the users for the services used by ada-va (database, airflow ..).
+The values have to be filled out by hand and not be pushed onto the repository.
+
+*ada-va.cfg* contains the default parameters for the extractors as well parameters shared by all extractors.
+
+* adava_cache_dir
+* docker_url
+* shotdetection sensitivity
+* deepfeatures frame_width
